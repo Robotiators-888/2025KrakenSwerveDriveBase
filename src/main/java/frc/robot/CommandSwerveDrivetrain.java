@@ -27,14 +27,13 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.generated.TunerConstants;
-
-
+import frc.robot.Telemetry;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements subsystem
  * so it can be used in command-based projects.
  */
-public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsystem {
+public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder> implements Subsystem {
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
@@ -45,9 +44,10 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
     private final SwerveRequest.ApplyRobotSpeeds chassisSpeedsRequest = new SwerveRequest.ApplyRobotSpeeds();
 
+    private final Telemetry logger = new Telemetry(TunerConstants.kSpeedAt12VoltsMps);
+
     public final StructPublisher<Pose2d> publisher1 = NetworkTableInstance.getDefault()
         .getStructTopic("debugXPoint", Pose2d.struct).publish(); 
-
     public final StructPublisher<Pose2d> publisher3 = NetworkTableInstance.getDefault()
         .getStructTopic("PhotonCam1Pose", Pose2d.struct).publish(); 
     public final StructPublisher<Pose2d> publisher4 = NetworkTableInstance.getDefault()
@@ -64,12 +64,34 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
     private final SwerveRequest.ApplyRobotSpeeds autoRequest = new SwerveRequest.ApplyRobotSpeeds();
 
+    private boolean reachedAutoTarget = false;
+    private boolean intakeComplete = true;
+
+    public void setReachedTarget(boolean value) {
+        reachedAutoTarget = value;
+        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putBoolean("ReachedAutoTarget", reachedAutoTarget);
+    }
+
+    public boolean getReachedTarget() {
+        return reachedAutoTarget;
+    }
+
+    public void setIntakeComplete(boolean value) {
+        intakeComplete = value;
+        edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putBoolean("IntakeComplete", intakeComplete);
+    }
+
+    public boolean getIntakeComplete() {
+        return intakeComplete;
+    }
+
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveConstants, double OdometryUpdateFrequency, SwerveModuleConstants... modules) {
         super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, OdometryUpdateFrequency, modules);
         configurePathPlanner();
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        registerTelemetry(logger::telemeterize);
     }
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveConstants, SwerveModuleConstants... modules) {
         super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, modules);
@@ -77,6 +99,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
         if (Utils.isSimulation()) {
             startSimThread();
         }
+        registerTelemetry(logger::telemeterize);
     }
 
     private void configurePathPlanner() {

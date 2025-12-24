@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import org.json.simple.parser.ParseException;
 import org.photonvision.EstimatedRobotPose;
 
-import com.fasterxml.jackson.databind.introspect.DefaultAccessorNamingStrategy;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
@@ -71,7 +70,7 @@ import frc.robot.subsystems.SUB_LEDs;
 import frc.robot.subsystems.SUB_PhotonVision;
 import frc.robot.subsystems.SUB_Pivot;
 import frc.robot.subsystems.SUB_Roller;
-import frc.robot.utils.AutoGenerator;
+
 import frc.robot.utils.Elastic;
 
 
@@ -85,7 +84,7 @@ public class RobotContainer {
         // The robot's subsystems and commands are defined here...
         private static final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
         private static final SUB_PhotonVision photonVision = SUB_PhotonVision.getInstance();
-        private static final AutoGenerator autoGenerator = AutoGenerator.getInstance();
+
         private final SendableChooser<Command> autoChooser;
         public static SUB_Elevator elevator = SUB_Elevator.getInstance();
         public static SUB_Roller roller = SUB_Roller.getInstance();
@@ -219,13 +218,13 @@ public class RobotContainer {
 
                 NamedCommands.registerCommand("ReachedTarget", new InstantCommand(
 
-                                () -> autoGenerator.setreachedtarget(true)));
+                                () -> drivetrain.setReachedTarget(true)));
 
                 NamedCommands.registerCommand("ResetReachedTarget",
-                                new InstantCommand(() -> autoGenerator.setreachedtarget(false)));
+                                new InstantCommand(() -> drivetrain.setReachedTarget(false)));
 
                 NamedCommands.registerCommand("scoreL2(conditional)", new SequentialCommandGroup(
-                                Commands.waitUntil(() -> autoGenerator.getreachedtarget()),
+                                Commands.waitUntil(() -> drivetrain.getReachedTarget()),
                                 new InstantCommand(() -> pivot
                                                 .changeSetpoint(PivotConstants.kElevatingSetpoint)),
                                 new InstantCommand(() -> elevator
@@ -241,7 +240,7 @@ public class RobotContainer {
 
                 NamedCommands.registerCommand("scoreL4(conditional)", new ParallelRaceGroup(
                                 new SequentialCommandGroup(Commands
-                                                .waitUntil(() -> autoGenerator.getreachedtarget()),
+                                                .waitUntil(() -> drivetrain.getReachedTarget()),
                                                 new InstantCommand(() -> pivot.changeSetpoint(
                                                                 PivotConstants.kElevatingSetpoint)),
                                                 new InstantCommand(() -> elevator.ChangeSetpoint(
@@ -257,7 +256,7 @@ public class RobotContainer {
                                                                 Roller.kEjectSpeed - 0.1),
                                                                 roller).withTimeout(.1))
                                                                                 .withTimeout(4),
-                                Commands.waitUntil(() -> !autoGenerator.getintakecomplete())));
+                                Commands.waitUntil(() -> !drivetrain.getIntakeComplete())));
 
                 NamedCommands.registerCommand(
                                 "runRoller", new RunCommand(
@@ -279,11 +278,11 @@ public class RobotContainer {
                                                                                                                 () -> roller.setRollerOutput(
                                                                                                                                 Roller.kIntakeSpeed,
                                                                                                                                 Roller.kRollerHelperSpeed),
-                                                                                                                roller).until(() -> roller.getHasCoral()).andThen(new InstantCommand(() -> roller.setRollerOutput(0, 0)).andThen(new InstantCommand(() -> autoGenerator.setintakecomplete(true))))),
+                                                                                                                roller).until(() -> roller.getHasCoral()).andThen(new InstantCommand(() -> roller.setRollerOutput(0, 0)).andThen(new InstantCommand(() -> drivetrain.setIntakeComplete(true))))),
                                                 new SequentialCommandGroup(new WaitCommand(4),
                                                                 new InstantCommand(
-                                                                                () -> autoGenerator
-                                                                                                .setintakecomplete(
+                                                                                () -> drivetrain
+                                                                                                .setIntakeComplete(
                                                                                                                 false)))));
 
                 NamedCommands.registerCommand("stow", new SequentialCommandGroup(new InstantCommand(
@@ -850,8 +849,8 @@ public class RobotContainer {
         }
 
         public void autonomousInit() {
-                autoGenerator.setintakecomplete(true);
-                autoGenerator.setreachedtarget(false);
+                drivetrain.setIntakeComplete(true);
+                drivetrain.setReachedTarget(false);
                 Elastic.selectTab("Autonomous");
                 leds.set(LEDs.kParty_Palette_Twinkles);
                 PathPlannerLogging.setLogTargetPoseCallback((pose) -> {
