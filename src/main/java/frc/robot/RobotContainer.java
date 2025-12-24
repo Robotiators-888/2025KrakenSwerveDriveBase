@@ -59,7 +59,11 @@ import frc.robot.Constants.Roller;
 import frc.robot.commands.CMD_OldPathfindReefAlign;
 import frc.robot.commands.CMD_PathfindAlgaeAlign;
 import frc.robot.commands.CMD_PathfindReefAlign;
-import frc.robot.subsystems.SUB_Drivetrain;
+import frc.robot.generated.TunerConstants;
+import frc.robot.CommandSwerveDrivetrain;
+import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+
 import frc.robot.subsystems.SUB_Elevator;
 import frc.robot.subsystems.SUB_GroundIntake;
 import frc.robot.subsystems.SUB_GroundPivot;
@@ -79,7 +83,7 @@ import frc.robot.utils.Elastic;
  */
 public class RobotContainer {
         // The robot's subsystems and commands are defined here...
-        private static final SUB_Drivetrain drivetrain = SUB_Drivetrain.getInstance();
+        private static final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
         private static final SUB_PhotonVision photonVision = SUB_PhotonVision.getInstance();
         private static final AutoGenerator autoGenerator = AutoGenerator.getInstance();
         private final SendableChooser<Command> autoChooser;
@@ -104,28 +108,18 @@ public class RobotContainer {
         private final CommandXboxController Driver2 =
                         new CommandXboxController(Operator.kDriver2ControllerPort);
 
+        private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
+            .withDeadband(Operator.kDriveDeadband)
+            .withRotationalDeadband(Operator.kDriveDeadband)
+            .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+
         /**
          * The container for the robot. Contains subsystems, OI devices, and commands.
          */
         public RobotContainer() {
-                // drivetrain.setDefaultCommand(new RunCommand( // Unstable
-                //                 () -> drivetrain.drive(
-                //                                 MathUtil.applyDeadband(Driver1.getRawAxis(1),
-                //                                                 Operator.kDriveDeadband),
-                //                                 MathUtil.applyDeadband(Driver1.getRawAxis(0),
-                //                                                 Operator.kDriveDeadband),
-                //                                 -MathUtil.applyDeadband(Driver1.getRawAxis(4),
-                //                                                 Operator.kDriveDeadband),
-                //                                 true, true),
-                //                 drivetrain));
-
-                                drivetrain.setDefaultCommand(new RunCommand( // Unstable
-                                () -> drivetrain.drive(
-                                        deadbandCompensate(Driver1.getRawAxis(1)),
-                                        deadbandCompensate(Driver1.getRawAxis(0)),
-                                        -deadbandCompensate(Driver1.getRawAxis(4)),
-                                                true, true),
-                                drivetrain));
+                drivetrain.setDefaultCommand(drivetrain.applyRequest(() -> drive.withVelocityX(-deadbandCompensate(Driver1.getLeftY()) * TunerConstants.kSpeedAt12VoltsMps)
+                        .withVelocityY(-deadbandCompensate(Driver1.getLeftX()) * TunerConstants.kSpeedAt12VoltsMps)
+                        .withRotationalRate(-deadbandCompensate(Driver1.getRightX()) * Math.PI * 2)));
 
                 // Trigger c = new
                 // Trigger(()->!pivot.atSetpoint(PivotConstants.kElevatingSetpoint))
@@ -148,19 +142,9 @@ public class RobotContainer {
                                 () -> groundPivot.drivePivotConditionally(Driver2.getRawAxis(1)),
                                 groundPivot));
 
-                Driver1.rightBumper().whileTrue(new RunCommand(
-                                () -> drivetrain.drive(-MathUtil.applyDeadband(
-                                                Math.copySign(Math.pow(Driver1.getRawAxis(1), 2),
-                                                                Driver1.getRawAxis(1)),
-                                                Operator.kDriveDeadband),
-                                                -MathUtil.applyDeadband(Math.copySign(
-                                                                Math.pow(Driver1.getRawAxis(0), 2),
-                                                                Driver1.getRawAxis(0)),
-                                                                Operator.kDriveDeadband),
-                                                -MathUtil.applyDeadband(Driver1.getRawAxis(4),
-                                                                Operator.kDriveDeadband),
-                                                false, true),
-                                drivetrain));
+                Driver1.rightBumper().whileTrue(drivetrain.applyRequest(() -> drive.withVelocityX(-Math.copySign(Math.pow(deadbandCompensate(Driver1.getLeftY()), 2), deadbandCompensate(Driver1.getLeftY())) * TunerConstants.kSpeedAt12VoltsMps)
+                        .withVelocityY(-Math.copySign(Math.pow(deadbandCompensate(Driver1.getLeftX()), 2), deadbandCompensate(Driver1.getLeftX())) * TunerConstants.kSpeedAt12VoltsMps)
+                        .withRotationalRate(-deadbandCompensate(Driver1.getRightX()) * Math.PI * 2)));
 
                 // File pathFolder = new File(Filesystem.getDeployDirectory() +
                 // "/pathplanner/paths/");
@@ -374,32 +358,17 @@ public class RobotContainer {
                                 .onFalse(new InstantCommand(() -> getSelectedReefSide()));
 
                 Driver1.povLeft()
-                                .whileTrue(new RunCommand(() -> drivetrain.drive(
-                                                MathUtil.applyDeadband(Driver1.getRawAxis(1),
-                                                                Operator.kDriveDeadband),
-                                                MathUtil.applyDeadband(Driver1.getRawAxis(0),
-                                                                Operator.kDriveDeadband),
-                                                0 * -MathUtil.applyDeadband(Driver1.getRawAxis(4),
-                                                                Operator.kDriveDeadband),
-                                                true, true), drivetrain));
+                                .whileTrue(drivetrain.applyRequest(() -> drive.withVelocityX(-deadbandCompensate(Driver1.getLeftY()) * TunerConstants.kSpeedAt12VoltsMps)
+                                        .withVelocityY(-deadbandCompensate(Driver1.getLeftX()) * TunerConstants.kSpeedAt12VoltsMps)
+                                        .withRotationalRate(0)));
                 Driver1.povUpLeft()
-                                .whileTrue(new RunCommand(() -> drivetrain.drive(
-                                                MathUtil.applyDeadband(Driver1.getRawAxis(1),
-                                                                Operator.kDriveDeadband),
-                                                MathUtil.applyDeadband(Driver1.getRawAxis(0),
-                                                                Operator.kDriveDeadband),
-                                                0 * -MathUtil.applyDeadband(Driver1.getRawAxis(4),
-                                                                Operator.kDriveDeadband),
-                                                true, true), drivetrain));
+                                .whileTrue(drivetrain.applyRequest(() -> drive.withVelocityX(-deadbandCompensate(Driver1.getLeftY()) * TunerConstants.kSpeedAt12VoltsMps)
+                                        .withVelocityY(-deadbandCompensate(Driver1.getLeftX()) * TunerConstants.kSpeedAt12VoltsMps)
+                                        .withRotationalRate(0)));
                 Driver1.povDownLeft()
-                                .whileTrue(new RunCommand(() -> drivetrain.drive(
-                                                MathUtil.applyDeadband(Driver1.getRawAxis(1),
-                                                                Operator.kDriveDeadband),
-                                                MathUtil.applyDeadband(Driver1.getRawAxis(0),
-                                                                Operator.kDriveDeadband),
-                                                0 * -MathUtil.applyDeadband(Driver1.getRawAxis(4),
-                                                                Operator.kDriveDeadband),
-                                                true, true), drivetrain));
+                                .whileTrue(drivetrain.applyRequest(() -> drive.withVelocityX(-deadbandCompensate(Driver1.getLeftY()) * TunerConstants.kSpeedAt12VoltsMps)
+                                        .withVelocityY(-deadbandCompensate(Driver1.getLeftX()) * TunerConstants.kSpeedAt12VoltsMps)
+                                        .withRotationalRate(0)));
 
                 // Driver1.rightStick();
                 // Driver 2
@@ -986,7 +955,7 @@ public class RobotContainer {
                                 double yStddev = xStddev;
                                 double rotStddev = Units.degreesToRadians(120.0);
                                 drivetrain.publisher3.set(photonPose.toPose2d());
-                                drivetrain.m_poseEstimator.setVisionMeasurementStdDevs(
+                                drivetrain.setVisionMeasurementStdDevs(
                                                 VecBuilder.fill(xStddev, yStddev, rotStddev));
                                 drivetrain.addVisionMeasurement(photonPose.toPose2d(),
                                                 photonPoseOptional.get().timestampSeconds);
@@ -1019,7 +988,7 @@ public class RobotContainer {
                                 double yStddev = xStddev;
                                 double rotStddev = Units.degreesToRadians(120.0);
                                 drivetrain.publisher4.set(photonPose.toPose2d());
-                                drivetrain.m_poseEstimator.setVisionMeasurementStdDevs(
+                                drivetrain.setVisionMeasurementStdDevs(
                                                 VecBuilder.fill(xStddev, yStddev, rotStddev));
                                 drivetrain.addVisionMeasurement(photonPose.toPose2d(),
                                                 photonPoseOptional.get().timestampSeconds);
@@ -1059,7 +1028,7 @@ public class RobotContainer {
         //                         double yStddev = xStddev;
         //                         double rotStddev = Units.degreesToRadians(120.0);
         //                         drivetrain.publisher3.set(photonPose.toPose2d());
-        //                         drivetrain.m_poseEstimator.setVisionMeasurementStdDevs(
+        //                         drivetrain.setVisionMeasurementStdDevs(
         //                                         VecBuilder.fill(xStddev, yStddev, rotStddev));
         //                         drivetrain.addVisionMeasurement(photonPose.toPose2d(),
         //                                         photonPoseOptional.get().timestampSeconds);
@@ -1095,13 +1064,13 @@ public class RobotContainer {
         //                                         / 4.92 + 2) / 3.6;
         //                         double yStddev = xStddev;
         //                         double rotStddev = Units.degreesToRadians(120.0);
-        //                         drivetrain.publisher4.set(photonPose.toPose2d());
-        //                         drivetrain.m_poseEstimator.setVisionMeasurementStdDevs(
+// drivetrain.publisher4.set(photonPose.toPose2d());
+        //                         drivetrain.setVisionMeasurementStdDevs(
         //                                         VecBuilder.fill(xStddev, yStddev, rotStddev));
         //                         drivetrain.addVisionMeasurement(photonPose.toPose2d(),
         //                                         photonPoseOptional.get().timestampSeconds);
 
-        //                         drivetrain.publisher4.set(photonPose.toPose2d());
+// drivetrain.publisher4.set(photonPose.toPose2d());
         //                         SmartDashboard.putNumber("Cam 2 Closest Tag",
         //                         photonVision.getCam2BestTarget().getFiducialId());
         //                 }
@@ -1130,7 +1099,7 @@ public class RobotContainer {
         //                         double yStddev = xStddev;
         //                         double rotStddev = Units.degreesToRadians(120.0);
         //                         drivetrain.publisher3.set(photonPose.toPose2d());
-        //                         drivetrain.m_poseEstimator.setVisionMeasurementStdDevs(
+        //                         drivetrain.setVisionMeasurementStdDevs(
         //                                         VecBuilder.fill(xStddev, yStddev, rotStddev));
         //                         drivetrain.addVisionMeasurement(photonPose.toPose2d(),
         //                                         photonPoseOptional.get().timestampSeconds);
@@ -1160,13 +1129,13 @@ public class RobotContainer {
         //                         double xStddev = Math.pow(distance, 2) / 8.0088;
         //                         double yStddev = xStddev;
         //                         double rotStddev = Units.degreesToRadians(120.0);
-        //                         drivetrain.publisher4.set(photonPose.toPose2d());
-        //                         drivetrain.m_poseEstimator.setVisionMeasurementStdDevs(
+// drivetrain.publisher4.set(photonPose.toPose2d());
+        //                         drivetrain.setVisionMeasurementStdDevs(
         //                                         VecBuilder.fill(xStddev, yStddev, rotStddev));
         //                         drivetrain.addVisionMeasurement(photonPose.toPose2d(),
         //                                         photonPoseOptional.get().timestampSeconds);
 
-        //                         drivetrain.publisher4.set(photonPose.toPose2d());
+// drivetrain.publisher4.set(photonPose.toPose2d());
         //                         SmartDashboard.putNumber("Cam 2 Closest Tag",
         //                         photonVision.getCam2BestTarget().getFiducialId());
         //                 }

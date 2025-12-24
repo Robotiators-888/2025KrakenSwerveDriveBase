@@ -20,7 +20,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
-import frc.robot.subsystems.SUB_Drivetrain;
+import frc.robot.CommandSwerveDrivetrain;
 import frc.robot.subsystems.SUB_PhotonVision;
 
 /*
@@ -32,7 +32,7 @@ public class CMD_PathfindAlgaeAlign extends Command {
 
   Command pathfindingCommand;
   SUB_PhotonVision photonVision;
-  SUB_Drivetrain drivetrain;
+  CommandSwerveDrivetrain drivetrain;
 
   HashMap<Integer, Translation2d> redLeft = new HashMap<>();
   HashMap<Integer, Translation2d> redRight = new HashMap<>();
@@ -40,7 +40,7 @@ public class CMD_PathfindAlgaeAlign extends Command {
   HashMap<Integer, Translation2d> blueRight = new HashMap<>();
 
   /** Creates a new CMD_PathfindReefAlign. */
-  public CMD_PathfindAlgaeAlign(SUB_Drivetrain drivetrain, SUB_PhotonVision photonVision) {
+  public CMD_PathfindAlgaeAlign(CommandSwerveDrivetrain drivetrain, SUB_PhotonVision photonVision) {
     this.photonVision = photonVision;
     this.drivetrain = drivetrain;
 

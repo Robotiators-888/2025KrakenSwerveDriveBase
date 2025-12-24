@@ -23,7 +23,7 @@ import edu.wpi.first.networktables.IntegerArrayPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
-import frc.robot.subsystems.SUB_Drivetrain;
+import frc.robot.CommandSwerveDrivetrain;
 import frc.robot.subsystems.SUB_PhotonVision;
 
 /*
@@ -36,7 +36,7 @@ public class CMD_PathfindReefAlign extends Command {
   Command pathfindingCommand;
   boolean isLeftAlign = false;
   SUB_PhotonVision photonVision;
-  SUB_Drivetrain drivetrain;
+  CommandSwerveDrivetrain drivetrain;
   Supplier<Integer> targetId;
   Supplier<Integer> pathId;
 
@@ -46,7 +46,7 @@ public class CMD_PathfindReefAlign extends Command {
   HashMap<Integer, Translation2d> blueRight = new HashMap<>();
 
   /** Creates a new CMD_PathfindReefAlign. */
-  public CMD_PathfindReefAlign(SUB_Drivetrain drivetrain, SUB_PhotonVision photonVision,
+  public CMD_PathfindReefAlign(CommandSwerveDrivetrain drivetrain, SUB_PhotonVision photonVision,
       boolean isLeftAlign, Supplier<Integer> targetId,Supplier<Integer> pathId) {
     this.photonVision = photonVision;
     this.drivetrain = drivetrain;
