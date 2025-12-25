@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.generated.TunerConstants;
 import frc.robot.Telemetry;
+import frc.robot.subsystems.SUB_PhotonVision;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.Arena2025Reefscape;
 
@@ -227,8 +228,11 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
             moduleConstants
         );
 
-        // Run simulation at a faster rate so PID gains behave reasonably
-        m_simNotifier = new Notifier(mapleSimSwerveDrivetrain::update);
+        /* Run simulation at a faster rate so PID gains behave more reasonably */
+        m_simNotifier = new Notifier(() -> {
+            mapleSimSwerveDrivetrain.update();
+            SUB_PhotonVision.getInstance().updateSimPose(mapleSimSwerveDrivetrain.mapleSimDrive.getSimulatedDriveTrainPose());
+        });
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
 

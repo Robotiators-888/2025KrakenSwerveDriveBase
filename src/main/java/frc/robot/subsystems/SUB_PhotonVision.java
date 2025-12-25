@@ -11,11 +11,17 @@ import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
+import org.photonvision.simulation.PhotonCameraSim;
+import org.photonvision.simulation.SimCameraProperties;
+import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.PhotonVision;
 
@@ -29,6 +35,10 @@ public class SUB_PhotonVision extends SubsystemBase {
   private final PhotonPoseEstimator poseEstimator1;
   private final PhotonPoseEstimator poseEstimator2;
   public AprilTagFieldLayout at_field;
+
+  private VisionSystemSim visionSim;
+  private PhotonCameraSim cam1Sim;
+  private PhotonCameraSim cam2Sim;
 
   public static SUB_PhotonVision getInstance() {
     if (INSTANCE == null) {
@@ -49,6 +59,30 @@ public class SUB_PhotonVision extends SubsystemBase {
          PhotonVision.kRobotToCamera2);
     poseEstimator1.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
     poseEstimator2.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
+
+    if (RobotBase.isSimulation()) {
+        visionSim = new VisionSystemSim("main");
+        visionSim.addAprilTags(at_field);
+
+        SimCameraProperties cameraProp = new SimCameraProperties();
+        cameraProp.setCalibration(960, 720, Rotation2d.fromDegrees(90));
+        cameraProp.setCalibError(0.35, 0.10);
+        cameraProp.setFPS(15);
+        cameraProp.setAvgLatencyMs(50);
+        cameraProp.setLatencyStdDevMs(15);
+
+        cam1Sim = new PhotonCameraSim(cam1, cameraProp);
+        cam2Sim = new PhotonCameraSim(cam2, cameraProp);
+
+        visionSim.addCamera(cam1Sim, PhotonVision.kRobotToCamera1);
+        visionSim.addCamera(cam2Sim, PhotonVision.kRobotToCamera2);
+    }
+  }
+
+  public void updateSimPose(Pose2d robotPose) {
+    if (RobotBase.isSimulation()) {
+        visionSim.update(robotPose);
+    }
   }
 
   public Optional<EstimatedRobotPose> getCam1Pose() {
