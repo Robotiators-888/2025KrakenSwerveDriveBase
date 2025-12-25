@@ -28,6 +28,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.generated.TunerConstants;
 import frc.robot.Telemetry;
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.Arena2025Reefscape;
+
+import static edu.wpi.first.units.Units.*;
+import edu.wpi.first.math.system.plant.DCMotor;
+import frc.robot.utils.simulation.MapleSimSwerveDrivetrain;
+import org.littletonrobotics.junction.Logger;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements subsystem
@@ -67,6 +74,8 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
     private boolean reachedAutoTarget = false;
     private boolean intakeComplete = true;
 
+    private MapleSimSwerveDrivetrain mapleSimSwerveDrivetrain = null;
+
     public void setReachedTarget(boolean value) {
         reachedAutoTarget = value;
         edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putBoolean("ReachedAutoTarget", reachedAutoTarget);
@@ -86,7 +95,13 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
     }
 
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveConstants, double OdometryUpdateFrequency, SwerveModuleConstants... modules) {
-        super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, OdometryUpdateFrequency, modules);
+        super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, OdometryUpdateFrequency, MapleSimSwerveDrivetrain.regulateModuleConstantsForSimulation(modules));
+        if (Utils.isSimulation()) {
+            Arena2025Reefscape arena = new Arena2025Reefscape();
+            org.ironmaple.simulation.SimulatedArena.overrideInstance(arena);
+            arena.placeGamePiecesOnField();
+            this.resetPose(new Pose2d(1.5, 4.0, new Rotation2d()));
+        }
         configurePathPlanner();
         if (Utils.isSimulation()) {
             startSimThread();
@@ -94,7 +109,13 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
         registerTelemetry(logger::telemeterize);
     }
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveConstants, SwerveModuleConstants... modules) {
-        super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, modules);
+        super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, MapleSimSwerveDrivetrain.regulateModuleConstantsForSimulation(modules));
+        if (Utils.isSimulation()) {
+            Arena2025Reefscape arena = new Arena2025Reefscape();
+            org.ironmaple.simulation.SimulatedArena.overrideInstance(arena);
+            arena.placeGamePiecesOnField();
+            this.resetPose(new Pose2d(1.5, 4.0, new Rotation2d()));
+        }
         configurePathPlanner();
         if (Utils.isSimulation()) {
             startSimThread();
@@ -148,35 +169,12 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
         this.resetRotation(new Rotation2d());
     }
 
+    @Override
     public void resetPose(Pose2d pose) {
-        this.resetRotation(pose.getRotation());
-        // SwerveDrivetrain (superclass) doesn't explicitly expose a setPose method easily in all versions.
-        // But resetRotation sets rotation. Translation is usually handled by seedFieldCentric?
-        // Actually, seedFieldRelative(pose) in old API did both.
-        // In 2025, if resetPose exists in super, we should use it.
-        // If not, we might need to access the odometry thread or similar.
-        // Let's assume resetPose exists or similar.
-        // Actually, for now I'll just use resetRotation as a placeholder if resetPose is missing, 
-        // but likely seedFieldRelative is replaced by resetPose(Pose2d).
-        // Let's try calling super.resetPose(pose). 
-        // If that fails compilation, I will know.
-        // But wait, I can't check compilation after this step easily without running it.
-        // I will use resetRotation for now and comment about translation.
-        // Actually, seedFieldRelative was renaming to resetPose?
-        try {
-            // Reflective check or just assume usage?
-            // I'll try calling super.resetPose(pose) if I can.
-            // But I cannot call super methods via reflection here.
-            // I'll use `resetRotation` for rotation.
-            // For translation, `resetTranslation`?
-            // The search said `seedFieldCentric` resets to 0.
-            
-            // Let's assume I should call super.resetPose(pose). 
-            // If it fails, I'll fix it.
-            super.resetPose(pose);
-        } catch (Throwable t) {
-            // Fallback?
+        if (this.mapleSimSwerveDrivetrain != null) {
+            mapleSimSwerveDrivetrain.mapleSimDrive.setSimulationWorldPose(pose);
         }
+        super.resetPose(pose);
     }
 
     public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative, boolean rateLimit) {
@@ -204,17 +202,33 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
     // Let's check imports for Matrix.
 
     private void startSimThread() {
-        m_lastSimTime = Utils.getCurrentTimeSeconds();
+        // Initialize MapleSim with your robot's physical properties
+        @SuppressWarnings("unchecked")
+        var moduleConstants = (SwerveModuleConstants<com.ctre.phoenix6.configs.TalonFXConfiguration, com.ctre.phoenix6.configs.TalonFXConfiguration, com.ctre.phoenix6.configs.CANcoderConfiguration>[])
+            new SwerveModuleConstants[] {
+                TunerConstants.FrontLeft,
+                TunerConstants.FrontRight,
+                TunerConstants.BackLeft,
+                TunerConstants.BackRight
+            };
 
-        /* Run simulation at a faster rate so PID gains behave more reasonably */
-        m_simNotifier = new Notifier(() -> {
-            final double currentTime = Utils.getCurrentTimeSeconds();
-            double deltaTime = currentTime - m_lastSimTime;
-            m_lastSimTime = currentTime;
+        mapleSimSwerveDrivetrain = new MapleSimSwerveDrivetrain(
+            Seconds.of(kSimLoopPeriod),
+            Pounds.of(125), // Robot Mass
+            Inches.of(30),  // Bumper Length X
+            Inches.of(30),  // Bumper Width Y
+            DCMotor.getKrakenX60(1), // Drive Motor Type
+            DCMotor.getKrakenX60(1), // Steer Motor Type
+            1.2, // Wheel Coefficient of Friction
+            this.getModuleLocations(),
+            this.getPigeon2(),
+            this.getModules(),
+            // Pass the constants for FL, FR, BL, BR explicitly as a typed array to avoid unsafe varargs creation
+            moduleConstants
+        );
 
-            /* use the measured time delta, get battery voltage from WPILib */
-            updateSimState(deltaTime, RobotController.getBatteryVoltage());
-        });
+        // Run simulation at a faster rate so PID gains behave reasonably
+        m_simNotifier = new Notifier(mapleSimSwerveDrivetrain::update);
         m_simNotifier.startPeriodic(kSimLoopPeriod);
     }
 
@@ -232,6 +246,9 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
                                 : BlueAlliancePerspectiveRotation);
                 hasAppliedOperatorPerspective = true;
             });
+        }
+        if (mapleSimSwerveDrivetrain != null) {
+            Logger.recordOutput("Drive/SimulationPose", mapleSimSwerveDrivetrain.mapleSimDrive.getSimulatedDriveTrainPose());
         }
     }
 }
