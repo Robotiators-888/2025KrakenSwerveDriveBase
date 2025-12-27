@@ -38,7 +38,7 @@ public class SUB_PhotonVision extends SubsystemBase {
   }
 
   private SUB_PhotonVision() {
-    at_field =  AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark); // TODO: Change for diff events
+
 
     cam1.setPipelineIndex(0);
     cam2.setPipelineIndex(0);

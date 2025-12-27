@@ -128,18 +128,9 @@ public class RobotContainer {
                 Driver1.leftStick().onTrue(new InstantCommand(() -> drivetrain.zeroHeading())); // TODO:
                                                                                                 // Change
                
-                Driver1.x().whileTrue(new CMD_PathfindReefAlign(drivetrain, photonVision, true,
-                                () -> targetId, () -> listIndex));
-                Driver1.b().whileTrue(new CMD_PathfindReefAlign(drivetrain, photonVision, false,
-                                () -> targetId, () -> listIndex));
 
-                Driver1.leftBumper().whileTrue(
-                                new CMD_OldPathfindReefAlign(drivetrain, photonVision, true)); // Right
-                Driver1.leftTrigger().whileTrue(
-                                new CMD_OldPathfindReefAlign(drivetrain, photonVision, false)); // Left
 
-                Driver1.rightStick().onTrue(Commands.none())
-                                .onFalse(new InstantCommand(() -> getSelectedReefSide()));
+
 
                 Driver1.povLeft()
                                 .whileTrue(drivetrain.applyRequest(() -> drive.withVelocityX(-deadbandCompensate(Driver1.getLeftY()) * TunerConstants.kSpeedAt12VoltsMps)
