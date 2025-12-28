@@ -21,14 +21,20 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.PhotonVision;
 
 public class SUB_PhotonVision extends SubsystemBase {
   private static SUB_PhotonVision INSTANCE = null;
+  
+  private static final double kMaxZError = 1.0;
+  private static final double kMaxAmbiguity = 0.2;
+  private static final double kMaxDistance = 12.0;
 
-  private final PhotonCamera cam1 = new PhotonCamera(PhotonVision.kCam1Name);
+  private final PhotonCamera cam1 = new PhotonCamera(PhotonVision.kCamName);
   private final PhotonCamera cam2 = new PhotonCamera(PhotonVision.kCam2Name);
   private PhotonTrackedTarget cam1BestTarget;
   private PhotonTrackedTarget cam2BestTarget;
@@ -39,6 +45,11 @@ public class SUB_PhotonVision extends SubsystemBase {
   private VisionSystemSim visionSim;
   private PhotonCameraSim cam1Sim;
   private PhotonCameraSim cam2Sim;
+
+  private final StructPublisher<Pose2d> cam1Publisher = NetworkTableInstance.getDefault()
+      .getStructTopic("Vision/Cam1Pose", Pose2d.struct).publish();
+  private final StructPublisher<Pose2d> cam2Publisher = NetworkTableInstance.getDefault()
+      .getStructTopic("Vision/Cam2Pose", Pose2d.struct).publish();
 
   public static SUB_PhotonVision getInstance() {
     if (INSTANCE == null) {
@@ -53,29 +64,38 @@ public class SUB_PhotonVision extends SubsystemBase {
     cam1.setPipelineIndex(0);
     cam2.setPipelineIndex(0);
 
-    poseEstimator1 = new PhotonPoseEstimator(at_field, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+    PoseStrategy strategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR;
+    if (RobotBase.isSimulation()) {
+        strategy = PoseStrategy.MULTI_TAG_PNP_ON_RIO;
+    }
+
+    poseEstimator1 = new PhotonPoseEstimator(at_field, strategy,
         PhotonVision.kRobotToCamera1);
-    poseEstimator2 = new PhotonPoseEstimator(at_field, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+    poseEstimator2 = new PhotonPoseEstimator(at_field, strategy,
          PhotonVision.kRobotToCamera2);
     poseEstimator1.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
     poseEstimator2.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
 
     if (RobotBase.isSimulation()) {
-        visionSim = new VisionSystemSim("main");
-        visionSim.addAprilTags(at_field);
+      visionSim = new VisionSystemSim("main");
+      visionSim.addAprilTags(at_field);
 
-        SimCameraProperties cameraProp = new SimCameraProperties();
-        cameraProp.setCalibration(960, 720, Rotation2d.fromDegrees(90));
-        cameraProp.setCalibError(0.35, 0.10);
-        cameraProp.setFPS(15);
-        cameraProp.setAvgLatencyMs(50);
-        cameraProp.setLatencyStdDevMs(15);
+      SimCameraProperties cameraProp = new SimCameraProperties();
+      // Arducam OV9281: 1280 x 800 resolution with a 100 degree diagonal FOV.
+      cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(100));
+      cameraProp.setCalibError(0.25, 0.08);
+      cameraProp.setFPS(20);
+      cameraProp.setAvgLatencyMs(35);
+      cameraProp.setLatencyStdDevMs(5);
 
-        cam1Sim = new PhotonCameraSim(cam1, cameraProp);
-        cam2Sim = new PhotonCameraSim(cam2, cameraProp);
+      cam1Sim = new PhotonCameraSim(cam1, cameraProp);
+      cam2Sim = new PhotonCameraSim(cam2, cameraProp);
 
-        visionSim.addCamera(cam1Sim, PhotonVision.kRobotToCamera1);
-        visionSim.addCamera(cam2Sim, PhotonVision.kRobotToCamera2);
+      visionSim.addCamera(cam1Sim, PhotonVision.kRobotToCamera1);
+      visionSim.addCamera(cam2Sim, PhotonVision.kRobotToCamera2);
+      
+      cam1Sim.enableDrawWireframe(true);
+      cam2Sim.enableDrawWireframe(true);
     }
   }
 
@@ -85,6 +105,39 @@ public class SUB_PhotonVision extends SubsystemBase {
     }
   }
 
+  private boolean isPoseValid(EstimatedRobotPose pose) {
+      // 1. Height Check (Robot shouldn't fly)
+      if (Math.abs(pose.estimatedPose.getZ()) > kMaxZError) {
+          edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/Status", "REJECTED: Too High (" + pose.estimatedPose.getZ() + "m)");
+          return false;
+      }
+
+      // 2. Field Bounds Check (Roughly)
+      if (pose.estimatedPose.getX() < -1.0 || pose.estimatedPose.getX() > frc.robot.Constants.Field.fieldLength + 1.0) {
+          edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/Status", "REJECTED: Out of Bounds (X)");
+          return false;
+      }
+      if (pose.estimatedPose.getY() < -1.0 || pose.estimatedPose.getY() > frc.robot.Constants.Field.fieldWidth + 1.0) {
+          edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/Status", "REJECTED: Out of Bounds (Y)");
+          return false;
+      }
+
+      // 3. Distance Check (Average distance to tags)
+      double totalDist = 0;
+      int tagCount = 0;
+      for (PhotonTrackedTarget target : pose.targetsUsed) {
+          totalDist += target.getBestCameraToTarget().getTranslation().getNorm();
+          tagCount++;
+      }
+      if (tagCount > 0 && (totalDist / tagCount) > kMaxDistance) {
+          edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/Status", "REJECTED: Too Far (" + (totalDist/tagCount) + "m)");
+          return false;
+      }
+
+      edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/Status", "ACCEPTED");
+      return true;
+  }
+
   public Optional<EstimatedRobotPose> getCam1Pose() {
     List<PhotonPipelineResult> results1 = cam1.getAllUnreadResults();
   
@@ -92,7 +145,14 @@ public class SUB_PhotonVision extends SubsystemBase {
     for (PhotonPipelineResult result : results1) {
       if (result.hasTargets()) {
         cam1BestTarget = result.getBestTarget();
-        finalPose1 = poseEstimator1.update(result);
+        // Filter: Ambiguity Check
+        if (cam1BestTarget.getPoseAmbiguity() > kMaxAmbiguity) continue;
+        
+        Optional<EstimatedRobotPose> pose = poseEstimator1.update(result);
+        if (pose.isPresent() && isPoseValid(pose.get())) {
+            finalPose1 = pose;
+            cam1Publisher.set(pose.get().estimatedPose.toPose2d());
+        }
       }
     }
     return finalPose1;
@@ -104,7 +164,17 @@ public class SUB_PhotonVision extends SubsystemBase {
     for (PhotonPipelineResult result : results2) {
       if (result.hasTargets()) {
         cam2BestTarget = result.getBestTarget();
-        finalPose2 = poseEstimator2.update(result);
+         // Filter: Ambiguity Check
+         if (cam2BestTarget.getPoseAmbiguity() > kMaxAmbiguity) {
+             edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/Status", "REJECTED: High Ambiguity");
+             continue;
+         }
+
+        Optional<EstimatedRobotPose> pose = poseEstimator2.update(result);
+        if (pose.isPresent() && isPoseValid(pose.get())) {
+            finalPose2 = pose;
+            cam2Publisher.set(pose.get().estimatedPose.toPose2d());
+        }
       }
     }
     return finalPose2;

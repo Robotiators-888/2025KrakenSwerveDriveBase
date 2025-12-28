@@ -227,6 +227,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
             // Pass the constants for FL, FR, BL, BR explicitly as a typed array to avoid unsafe varargs creation
             moduleConstants
         );
+        mapleSimSwerveDrivetrain.mapleSimDrive.setSimulationWorldPose(this.getPose());
 
         /* Run simulation at a faster rate so PID gains behave more reasonably */
         m_simNotifier = new Notifier(() -> {
