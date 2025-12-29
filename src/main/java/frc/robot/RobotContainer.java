@@ -83,20 +83,24 @@ public class RobotContainer {
         private final CommandXboxController Driver2 =
                         new CommandXboxController(Operator.kDriver2ControllerPort);
 
-        private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDeadband(Operator.kDriveDeadband)
-            .withRotationalDeadband(Operator.kDriveDeadband)
-            .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
+        private final SwerveRequest.FieldCentric drive =
+                        new SwerveRequest.FieldCentric().withDeadband(Operator.kDriveDeadband)
+                                        .withRotationalDeadband(Operator.kDriveDeadband)
+                                        .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
         /**
          * The container for the robot. Contains subsystems, OI devices, and commands.
          */
         public RobotContainer() {
-                drivetrain.setDefaultCommand(drivetrain.applyRequest(() -> drive.withVelocityX(-deadbandCompensate(Driver1.getLeftY()) * TunerConstants.kSpeedAt12VoltsMps)
-                        .withVelocityY(-deadbandCompensate(Driver1.getLeftX()) * TunerConstants.kSpeedAt12VoltsMps)
-                        .withRotationalRate(-deadbandCompensate(Driver1.getRightX()) * Math.PI * 2)));
+                drivetrain.setDefaultCommand(drivetrain.applyRequest(() -> drive
+                                .withVelocityX(-deadbandCompensate(Driver1.getLeftY())
+                                                * TunerConstants.kSpeedAt12VoltsMps)
+                                .withVelocityY(-deadbandCompensate(Driver1.getLeftX())
+                                                * TunerConstants.kSpeedAt12VoltsMps)
+                                .withRotationalRate(-deadbandCompensate(Driver1.getRightX())
+                                                * Math.PI * 2)));
 
-                
+
                 NamedCommands.registerCommand("ReachedTarget", new InstantCommand(
 
                                 () -> drivetrain.setReachedTarget(true)));
@@ -104,7 +108,7 @@ public class RobotContainer {
                 NamedCommands.registerCommand("ResetReachedTarget",
                                 new InstantCommand(() -> drivetrain.setReachedTarget(false)));
 
-                
+
                 // Configure the trigger bindings
                 configureBindings();
 
@@ -127,7 +131,7 @@ public class RobotContainer {
 
                 Driver1.leftStick().onTrue(new InstantCommand(() -> drivetrain.zeroHeading())); // TODO:
                                                                                                 // Change
-               
+
                 Driver1.x().whileTrue(new CMD_PathfindReefAlign(drivetrain, photonVision, true,
                                 () -> targetId, () -> listIndex));
                 Driver1.b().whileTrue(new CMD_PathfindReefAlign(drivetrain, photonVision, false,
@@ -141,18 +145,24 @@ public class RobotContainer {
                 Driver1.rightStick().onTrue(Commands.none())
                                 .onFalse(new InstantCommand(() -> getSelectedReefSide()));
 
-                Driver1.povLeft()
-                                .whileTrue(drivetrain.applyRequest(() -> drive.withVelocityX(-deadbandCompensate(Driver1.getLeftY()) * TunerConstants.kSpeedAt12VoltsMps)
-                                        .withVelocityY(-deadbandCompensate(Driver1.getLeftX()) * TunerConstants.kSpeedAt12VoltsMps)
-                                        .withRotationalRate(0)));
-                Driver1.povUpLeft()
-                                .whileTrue(drivetrain.applyRequest(() -> drive.withVelocityX(-deadbandCompensate(Driver1.getLeftY()) * TunerConstants.kSpeedAt12VoltsMps)
-                                        .withVelocityY(-deadbandCompensate(Driver1.getLeftX()) * TunerConstants.kSpeedAt12VoltsMps)
-                                        .withRotationalRate(0)));
-                Driver1.povDownLeft()
-                                .whileTrue(drivetrain.applyRequest(() -> drive.withVelocityX(-deadbandCompensate(Driver1.getLeftY()) * TunerConstants.kSpeedAt12VoltsMps)
-                                        .withVelocityY(-deadbandCompensate(Driver1.getLeftX()) * TunerConstants.kSpeedAt12VoltsMps)
-                                        .withRotationalRate(0)));
+                Driver1.povLeft().whileTrue(drivetrain.applyRequest(() -> drive
+                                .withVelocityX(-deadbandCompensate(Driver1.getLeftY())
+                                                * TunerConstants.kSpeedAt12VoltsMps)
+                                .withVelocityY(-deadbandCompensate(Driver1.getLeftX())
+                                                * TunerConstants.kSpeedAt12VoltsMps)
+                                .withRotationalRate(0)));
+                Driver1.povUpLeft().whileTrue(drivetrain.applyRequest(() -> drive
+                                .withVelocityX(-deadbandCompensate(Driver1.getLeftY())
+                                                * TunerConstants.kSpeedAt12VoltsMps)
+                                .withVelocityY(-deadbandCompensate(Driver1.getLeftX())
+                                                * TunerConstants.kSpeedAt12VoltsMps)
+                                .withRotationalRate(0)));
+                Driver1.povDownLeft().whileTrue(drivetrain.applyRequest(() -> drive
+                                .withVelocityX(-deadbandCompensate(Driver1.getLeftY())
+                                                * TunerConstants.kSpeedAt12VoltsMps)
+                                .withVelocityY(-deadbandCompensate(Driver1.getLeftX())
+                                                * TunerConstants.kSpeedAt12VoltsMps)
+                                .withRotationalRate(0)));
 
                 // Driver1.rightStick();
                 // Driver 2
@@ -166,7 +176,7 @@ public class RobotContainer {
                 // Driver2.y().onTrue(new
                 // InstantCommand(()->pivot.changeSetpoint(PivotConstants.kL4Setpoint)));
 
-    
+
                 // Driver2.povRight().onTrue(getBargeScoringCommand());
 
 
@@ -221,18 +231,18 @@ public class RobotContainer {
 
         }
 
-        public double deadbandCompensate(double axis){
-                if (Math.abs(axis) < .1){
+        public double deadbandCompensate(double axis) {
+                if (Math.abs(axis) < .1) {
                         return 0.0;
-                }
-                else{
-                        return Math.copySign((Math.abs(axis) - .1) * (1/0.9), axis);
+                } else {
+                        return Math.copySign((Math.abs(axis) - .1) * (1 / 0.9), axis);
                 }
         }
 
         public void robotInit() {
                 Pathfinding.setPathfinder(new LocalADStar());
                 powerDistribution.setSwitchableChannel(true);
+
         }
 
         public void getSelectedReefSide() {
@@ -276,7 +286,7 @@ public class RobotContainer {
                 }
         }
 
-        
+
 
         /**
          * Use this to pass the autonomous command to the main {@link Robot} class.
@@ -461,13 +471,16 @@ public class RobotContainer {
 
                 if (photonPoseOptional.isPresent()) {
                         Pose3d photonPose = photonPoseOptional.get().estimatedPose;
-                        double odometryDifference = (drivetrain.getPose().minus(new Pose2d(photonPose.getX(),photonPose.getY(), new Rotation2d(0)))).getTranslation().getNorm();
+                        double odometryDifference = (drivetrain.getPose()
+                                        .minus(new Pose2d(photonPose.getX(), photonPose.getY(),
+                                                        new Rotation2d(0)))).getTranslation()
+                                                                        .getNorm();
                         if (photonPose.getX() >= 0 && photonPose.getX() <= Field.fieldLength
                                         && photonPose.getY() >= 0
                                         && photonPose.getY() <= Field.fieldWidth
                                         && photonVision.getCam1BestTarget() != null
-                                        // && odometryDifference > 2
-                                        ) {
+                        // && odometryDifference > 2
+                        ) {
 
                                 Pose2d closestTag = photonVision.at_field.getTagPose(
                                                 photonVision.getCam1BestTarget().getFiducialId())
@@ -494,13 +507,16 @@ public class RobotContainer {
 
                 if (photonPoseOptional.isPresent()) {
                         Pose3d photonPose = photonPoseOptional.get().estimatedPose;
-                        double odometryDifference = (drivetrain.getPose().minus(new Pose2d(photonPose.getX(),photonPose.getY(), new Rotation2d(0)))).getTranslation().getNorm();
+                        double odometryDifference = (drivetrain.getPose()
+                                        .minus(new Pose2d(photonPose.getX(), photonPose.getY(),
+                                                        new Rotation2d(0)))).getTranslation()
+                                                                        .getNorm();
                         if (photonPose.getX() >= 0 && photonPose.getX() <= Field.fieldLength
                                         && photonPose.getY() >= 0
                                         && photonPose.getY() <= Field.fieldWidth
                                         && photonVision.getCam2BestTarget() != null
-                                        // && odometryDifference > 2
-                                        ) {
+                        // && odometryDifference > 2
+                        ) {
 
                                 Pose2d closestTag = photonVision.at_field.getTagPose(
                                                 photonVision.getCam2BestTarget().getFiducialId())
@@ -526,144 +542,144 @@ public class RobotContainer {
         }
 
         // public static void photonAutonPoseUpdate() {
-        //         Optional<EstimatedRobotPose> photonPoseOptional = photonVision.getCam1Pose();
+        // Optional<EstimatedRobotPose> photonPoseOptional = photonVision.getCam1Pose();
 
-        //         if (photonPoseOptional.isPresent()) {
-        //                 Pose3d photonPose = photonPoseOptional.get().estimatedPose;
+        // if (photonPoseOptional.isPresent()) {
+        // Pose3d photonPose = photonPoseOptional.get().estimatedPose;
 
-        //                 if (photonPose.getX() >= 0 && photonPose.getX() <= Field.fieldLength
-        //                                 && photonPose.getY() >= 0
-        //                                 && photonPose.getY() <= Field.fieldWidth
-        //                                 && photonVision.getCam1BestTarget() != null) {
+        // if (photonPose.getX() >= 0 && photonPose.getX() <= Field.fieldLength
+        // && photonPose.getY() >= 0
+        // && photonPose.getY() <= Field.fieldWidth
+        // && photonVision.getCam1BestTarget() != null) {
 
-        //                         Pose2d closestTag = photonVision.at_field.getTagPose(
-        //                                         photonVision.getCam1BestTarget().getFiducialId())
-        //                                         .get().toPose2d();
-        //                         Translation2d translate = closestTag.minus(photonPose.toPose2d())
-        //                                         .getTranslation();
+        // Pose2d closestTag = photonVision.at_field.getTagPose(
+        // photonVision.getCam1BestTarget().getFiducialId())
+        // .get().toPose2d();
+        // Translation2d translate = closestTag.minus(photonPose.toPose2d())
+        // .getTranslation();
 
-        //                         double distance = translate.getNorm();
-        //                         double xStddev = Math.pow(distance, 1.75) * (3 * (Math.sqrt(Math
-        //                                         .pow(drivetrain.getChassisSpeeds().vxMetersPerSecond,
-        //                                                         2)
-        //                                         + Math.pow(drivetrain
-        //                                                         .getChassisSpeeds().vyMetersPerSecond,
-        //                                                         2)))
-        //                                         / 4.92 + 2) / 3.6;
-        //                         double yStddev = xStddev;
-        //                         double rotStddev = Units.degreesToRadians(120.0);
-        //                         drivetrain.publisher3.set(photonPose.toPose2d());
-        //                         drivetrain.setVisionMeasurementStdDevs(
-        //                                         VecBuilder.fill(xStddev, yStddev, rotStddev));
-        //                         drivetrain.addVisionMeasurement(photonPose.toPose2d(),
-        //                                         photonPoseOptional.get().timestampSeconds);
-        //                         drivetrain.publisher3.set(photonPose.toPose2d());
-        //                         SmartDashboard.putNumber("Cam 1 Closest Tag",
-        //                                         photonVision.getCam1BestTarget().getFiducialId());
-        //                 }
-        //         }
+        // double distance = translate.getNorm();
+        // double xStddev = Math.pow(distance, 1.75) * (3 * (Math.sqrt(Math
+        // .pow(drivetrain.getChassisSpeeds().vxMetersPerSecond,
+        // 2)
+        // + Math.pow(drivetrain
+        // .getChassisSpeeds().vyMetersPerSecond,
+        // 2)))
+        // / 4.92 + 2) / 3.6;
+        // double yStddev = xStddev;
+        // double rotStddev = Units.degreesToRadians(120.0);
+        // drivetrain.publisher3.set(photonPose.toPose2d());
+        // drivetrain.setVisionMeasurementStdDevs(
+        // VecBuilder.fill(xStddev, yStddev, rotStddev));
+        // drivetrain.addVisionMeasurement(photonPose.toPose2d(),
+        // photonPoseOptional.get().timestampSeconds);
+        // drivetrain.publisher3.set(photonPose.toPose2d());
+        // SmartDashboard.putNumber("Cam 1 Closest Tag",
+        // photonVision.getCam1BestTarget().getFiducialId());
+        // }
+        // }
 
-        //         photonPoseOptional = photonVision.getCam2Pose();
+        // photonPoseOptional = photonVision.getCam2Pose();
 
-        //         if (photonPoseOptional.isPresent()) {
-        //                 Pose3d photonPose = photonPoseOptional.get().estimatedPose;
+        // if (photonPoseOptional.isPresent()) {
+        // Pose3d photonPose = photonPoseOptional.get().estimatedPose;
 
-        //                 if (photonPose.getX() >= 0 && photonPose.getX() <= Field.fieldLength
-        //                                 && photonPose.getY() >= 0
-        //                                 && photonPose.getY() <= Field.fieldWidth
-        //                                 && photonVision.getCam2BestTarget() != null) {
+        // if (photonPose.getX() >= 0 && photonPose.getX() <= Field.fieldLength
+        // && photonPose.getY() >= 0
+        // && photonPose.getY() <= Field.fieldWidth
+        // && photonVision.getCam2BestTarget() != null) {
 
-        //                         Pose2d closestTag = photonVision.at_field.getTagPose(
-        //                                         photonVision.getCam2BestTarget().getFiducialId())
-        //                                         .get().toPose2d();
-        //                         Translation2d translate = closestTag.minus(photonPose.toPose2d())
-        //                                         .getTranslation();
+        // Pose2d closestTag = photonVision.at_field.getTagPose(
+        // photonVision.getCam2BestTarget().getFiducialId())
+        // .get().toPose2d();
+        // Translation2d translate = closestTag.minus(photonPose.toPose2d())
+        // .getTranslation();
 
-        //                         double distance = translate.getNorm();
-        //                         double xStddev = Math.pow(distance, 1.75) * (3 * (Math.sqrt(Math
-        //                                         .pow(drivetrain.getChassisSpeeds().vxMetersPerSecond,
-        //                                                         2)
-        //                                         + Math.pow(drivetrain
-        //                                                         .getChassisSpeeds().vyMetersPerSecond,
-        //                                                         2)))
-        //                                         / 4.92 + 2) / 3.6;
-        //                         double yStddev = xStddev;
-        //                         double rotStddev = Units.degreesToRadians(120.0);
-// drivetrain.publisher4.set(photonPose.toPose2d());
-        //                         drivetrain.setVisionMeasurementStdDevs(
-        //                                         VecBuilder.fill(xStddev, yStddev, rotStddev));
-        //                         drivetrain.addVisionMeasurement(photonPose.toPose2d(),
-        //                                         photonPoseOptional.get().timestampSeconds);
+        // double distance = translate.getNorm();
+        // double xStddev = Math.pow(distance, 1.75) * (3 * (Math.sqrt(Math
+        // .pow(drivetrain.getChassisSpeeds().vxMetersPerSecond,
+        // 2)
+        // + Math.pow(drivetrain
+        // .getChassisSpeeds().vyMetersPerSecond,
+        // 2)))
+        // / 4.92 + 2) / 3.6;
+        // double yStddev = xStddev;
+        // double rotStddev = Units.degreesToRadians(120.0);
+        // drivetrain.publisher4.set(photonPose.toPose2d());
+        // drivetrain.setVisionMeasurementStdDevs(
+        // VecBuilder.fill(xStddev, yStddev, rotStddev));
+        // drivetrain.addVisionMeasurement(photonPose.toPose2d(),
+        // photonPoseOptional.get().timestampSeconds);
 
-// drivetrain.publisher4.set(photonPose.toPose2d());
-        //                         SmartDashboard.putNumber("Cam 2 Closest Tag",
-        //                         photonVision.getCam2BestTarget().getFiducialId());
-        //                 }
-        //         }
+        // drivetrain.publisher4.set(photonPose.toPose2d());
+        // SmartDashboard.putNumber("Cam 2 Closest Tag",
+        // photonVision.getCam2BestTarget().getFiducialId());
+        // }
+        // }
         // }
 
         // public static void photonDisabledPoseUpdate() {
-        //         Optional<EstimatedRobotPose> photonPoseOptional = photonVision.getCam1Pose();
+        // Optional<EstimatedRobotPose> photonPoseOptional = photonVision.getCam1Pose();
 
-        //         if (photonPoseOptional.isPresent()) {
-        //                 Pose3d photonPose = photonPoseOptional.get().estimatedPose;
+        // if (photonPoseOptional.isPresent()) {
+        // Pose3d photonPose = photonPoseOptional.get().estimatedPose;
 
-        //                 if (photonPose.getX() >= 0 && photonPose.getX() <= Field.fieldLength
-        //                                 && photonPose.getY() >= 0
-        //                                 && photonPose.getY() <= Field.fieldWidth
-        //                                 && photonVision.getCam1BestTarget() != null) {
+        // if (photonPose.getX() >= 0 && photonPose.getX() <= Field.fieldLength
+        // && photonPose.getY() >= 0
+        // && photonPose.getY() <= Field.fieldWidth
+        // && photonVision.getCam1BestTarget() != null) {
 
-        //                         Pose2d closestTag = photonVision.at_field.getTagPose(
-        //                                         photonVision.getCam1BestTarget().getFiducialId())
-        //                                         .get().toPose2d();
-        //                         Translation2d translate = closestTag.minus(photonPose.toPose2d())
-        //                                         .getTranslation();
+        // Pose2d closestTag = photonVision.at_field.getTagPose(
+        // photonVision.getCam1BestTarget().getFiducialId())
+        // .get().toPose2d();
+        // Translation2d translate = closestTag.minus(photonPose.toPose2d())
+        // .getTranslation();
 
-        //                         double distance = translate.getNorm();
-        //                         double xStddev = Math.pow(distance, 2) / 8.0088;
-        //                         double yStddev = xStddev;
-        //                         double rotStddev = Units.degreesToRadians(120.0);
-        //                         drivetrain.publisher3.set(photonPose.toPose2d());
-        //                         drivetrain.setVisionMeasurementStdDevs(
-        //                                         VecBuilder.fill(xStddev, yStddev, rotStddev));
-        //                         drivetrain.addVisionMeasurement(photonPose.toPose2d(),
-        //                                         photonPoseOptional.get().timestampSeconds);
-        //                         drivetrain.publisher3.set(photonPose.toPose2d());
-        //                         SmartDashboard.putNumber("Cam 1 Closest Tag",
-        //                                         photonVision.getCam1BestTarget().getFiducialId());
-        //                 }
-        //         }
+        // double distance = translate.getNorm();
+        // double xStddev = Math.pow(distance, 2) / 8.0088;
+        // double yStddev = xStddev;
+        // double rotStddev = Units.degreesToRadians(120.0);
+        // drivetrain.publisher3.set(photonPose.toPose2d());
+        // drivetrain.setVisionMeasurementStdDevs(
+        // VecBuilder.fill(xStddev, yStddev, rotStddev));
+        // drivetrain.addVisionMeasurement(photonPose.toPose2d(),
+        // photonPoseOptional.get().timestampSeconds);
+        // drivetrain.publisher3.set(photonPose.toPose2d());
+        // SmartDashboard.putNumber("Cam 1 Closest Tag",
+        // photonVision.getCam1BestTarget().getFiducialId());
+        // }
+        // }
 
-        //         photonPoseOptional = photonVision.getCam2Pose();
+        // photonPoseOptional = photonVision.getCam2Pose();
 
-        //         if (photonPoseOptional.isPresent()) {
-        //                 Pose3d photonPose = photonPoseOptional.get().estimatedPose;
+        // if (photonPoseOptional.isPresent()) {
+        // Pose3d photonPose = photonPoseOptional.get().estimatedPose;
 
-        //                 if (photonPose.getX() >= 0 && photonPose.getX() <= Field.fieldLength
-        //                                 && photonPose.getY() >= 0
-        //                                 && photonPose.getY() <= Field.fieldWidth
-        //                                 && photonVision.getCam2BestTarget() != null) {
+        // if (photonPose.getX() >= 0 && photonPose.getX() <= Field.fieldLength
+        // && photonPose.getY() >= 0
+        // && photonPose.getY() <= Field.fieldWidth
+        // && photonVision.getCam2BestTarget() != null) {
 
-        //                         Pose2d closestTag = photonVision.at_field.getTagPose(
-        //                                         photonVision.getCam2BestTarget().getFiducialId())
-        //                                         .get().toPose2d();
-        //                         Translation2d translate = closestTag.minus(photonPose.toPose2d())
-        //                                         .getTranslation();
+        // Pose2d closestTag = photonVision.at_field.getTagPose(
+        // photonVision.getCam2BestTarget().getFiducialId())
+        // .get().toPose2d();
+        // Translation2d translate = closestTag.minus(photonPose.toPose2d())
+        // .getTranslation();
 
-        //                         double distance = translate.getNorm();
-        //                         double xStddev = Math.pow(distance, 2) / 8.0088;
-        //                         double yStddev = xStddev;
-        //                         double rotStddev = Units.degreesToRadians(120.0);
-// drivetrain.publisher4.set(photonPose.toPose2d());
-        //                         drivetrain.setVisionMeasurementStdDevs(
-        //                                         VecBuilder.fill(xStddev, yStddev, rotStddev));
-        //                         drivetrain.addVisionMeasurement(photonPose.toPose2d(),
-        //                                         photonPoseOptional.get().timestampSeconds);
+        // double distance = translate.getNorm();
+        // double xStddev = Math.pow(distance, 2) / 8.0088;
+        // double yStddev = xStddev;
+        // double rotStddev = Units.degreesToRadians(120.0);
+        // drivetrain.publisher4.set(photonPose.toPose2d());
+        // drivetrain.setVisionMeasurementStdDevs(
+        // VecBuilder.fill(xStddev, yStddev, rotStddev));
+        // drivetrain.addVisionMeasurement(photonPose.toPose2d(),
+        // photonPoseOptional.get().timestampSeconds);
 
-// drivetrain.publisher4.set(photonPose.toPose2d());
-        //                         SmartDashboard.putNumber("Cam 2 Closest Tag",
-        //                         photonVision.getCam2BestTarget().getFiducialId());
-        //                 }
-        //         }
+        // drivetrain.publisher4.set(photonPose.toPose2d());
+        // SmartDashboard.putNumber("Cam 2 Closest Tag",
+        // photonVision.getCam2BestTarget().getFiducialId());
+        // }
+        // }
         // }
 }

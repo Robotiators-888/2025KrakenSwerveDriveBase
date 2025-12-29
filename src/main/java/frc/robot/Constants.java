@@ -16,6 +16,7 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.RobotBase;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -193,4 +194,20 @@ public final class Constants {
                 public static final double kColorRed = 0.61;
                 public static final double kParty_Palette_Twinkles = -0.53;
         }
+
+        public static class LogConstants {
+                public static final Mode simMode = Mode.SIM;
+                public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+        }
+
+        public static enum Mode {
+                /** Running on a real robot. */
+                REAL,
+            
+                /** Running a physics simulator. */
+                SIM,
+            
+                /** Replaying from a log file. */
+                REPLAY
+              }
 }
