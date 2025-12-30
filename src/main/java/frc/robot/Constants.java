@@ -210,4 +210,8 @@ public final class Constants {
                 /** Replaying from a log file. */
                 REPLAY
               }
+
+        public static class DriveConstants{
+                public static final double odometryFrequency = 100.0; // Hz
+        }
 }
