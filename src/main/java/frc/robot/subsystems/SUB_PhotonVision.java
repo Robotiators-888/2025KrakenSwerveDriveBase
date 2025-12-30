@@ -101,40 +101,26 @@ public class SUB_PhotonVision extends SubsystemBase {
     }
   }
 
-  private boolean isPoseValid(EstimatedRobotPose pose, String camName) {
-      // 1. Height Check (Robot shouldn't fly)
+  private boolean isPoseValid(EstimatedRobotPose pose, String camName, double ambiguity) {
       if (Math.abs(pose.estimatedPose.getZ()) > PhotonVision.kMaxZError) {
-          String msg = "REJECTED: Too High (" + pose.estimatedPose.getZ() + "m)";
-          edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/" + camName + "/Status", msg);
-          System.out.println("[" + camName + "] " + msg);
+          edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/" + camName + "/Status", "REJECTED: Too High");
           return false;
       }
 
-      // 2. Field Bounds Check (Roughly)
-      if (pose.estimatedPose.getX() < -1.0 || pose.estimatedPose.getX() > frc.robot.Constants.Field.fieldLength + 1.0) {
-          String msg = "REJECTED: Out of Bounds (X)";
-          edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/" + camName + "/Status", msg);
-          System.out.println("[" + camName + "] " + msg);
-          return false;
-      }
-      if (pose.estimatedPose.getY() < -1.0 || pose.estimatedPose.getY() > frc.robot.Constants.Field.fieldWidth + 1.0) {
-          String msg = "REJECTED: Out of Bounds (Y)";
-          edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/" + camName + "/Status", msg);
-          System.out.println("[" + camName + "] " + msg);
+      if (pose.estimatedPose.getX() < -1.0 || pose.estimatedPose.getX() > frc.robot.Constants.Field.fieldLength + 1.0 ||
+          pose.estimatedPose.getY() < -1.0 || pose.estimatedPose.getY() > frc.robot.Constants.Field.fieldWidth + 1.0) {
+          edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/" + camName + "/Status", "REJECTED: Out of Bounds");
           return false;
       }
 
-      // 3. Distance Check (Average distance to tags)
-      double totalDist = 0;
-      int tagCount = 0;
+      double minDist = Double.MAX_VALUE;
       for (PhotonTrackedTarget target : pose.targetsUsed) {
-          totalDist += target.getBestCameraToTarget().getTranslation().getNorm();
-          tagCount++;
+          double dist = target.getBestCameraToTarget().getTranslation().getNorm();
+          if (dist < minDist) minDist = dist;
       }
-      if (tagCount > 0 && (totalDist / tagCount) > PhotonVision.kMaxDistance) {
-          String msg = "REJECTED: Too Far (" + (totalDist/tagCount) + "m)";
-          edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/" + camName + "/Status", msg);
-          System.out.println("[" + camName + "] " + msg);
+      
+      if (minDist > PhotonVision.kMaxDistance) {
+          edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/" + camName + "/Status", "REJECTED: Too Far");
           return false;
       }
 
@@ -150,10 +136,13 @@ public class SUB_PhotonVision extends SubsystemBase {
       if (result.hasTargets()) {
         cam1BestTarget = result.getBestTarget();
         // Filter: Ambiguity Check
-        if (cam1BestTarget.getPoseAmbiguity() > PhotonVision.kMaxAmbiguity) continue;
+        if (cam1BestTarget.getPoseAmbiguity() > PhotonVision.kMaxAmbiguity) {
+            edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/Cam1/Status", "REJECTED: High Ambiguity (" + cam1BestTarget.getPoseAmbiguity() + ")");
+            continue;
+        }
         
         Optional<EstimatedRobotPose> pose = poseEstimator1.update(result);
-        if (pose.isPresent() && isPoseValid(pose.get(), "Cam1")) {
+        if (pose.isPresent() && isPoseValid(pose.get(), "Cam1", cam1BestTarget.getPoseAmbiguity())) {
             finalPose1 = pose;
             cam1Publisher.set(pose.get().estimatedPose.toPose2d());
         }
@@ -170,12 +159,12 @@ public class SUB_PhotonVision extends SubsystemBase {
         cam2BestTarget = result.getBestTarget();
          // Filter: Ambiguity Check
          if (cam2BestTarget.getPoseAmbiguity() > PhotonVision.kMaxAmbiguity) {
-             edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/Cam2/Status", "REJECTED: High Ambiguity");
+             edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putString("Vision/Cam2/Status", "REJECTED: High Ambiguity (" + cam2BestTarget.getPoseAmbiguity() + ")");
              continue;
          }
 
         Optional<EstimatedRobotPose> pose = poseEstimator2.update(result);
-        if (pose.isPresent() && isPoseValid(pose.get(), "Cam2")) {
+        if (pose.isPresent() && isPoseValid(pose.get(), "Cam2", cam2BestTarget.getPoseAmbiguity())) {
             finalPose2 = pose;
             cam2Publisher.set(pose.get().estimatedPose.toPose2d());
         }

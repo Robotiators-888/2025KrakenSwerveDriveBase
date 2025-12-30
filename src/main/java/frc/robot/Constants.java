@@ -64,8 +64,8 @@ public final class Constants {
         public static final class PhotonVision {
 
                 public static final String kCamName = "AprilTagCam1";
-                public static final double kMaxZError = 1.0;
-                public static final double kMaxAmbiguity = 0.2;
+                public static final double kMaxZError = 0.2;
+                public static final double kMaxAmbiguity = 0.1;
                 public static final double kMaxDistance = 12.0;
 
                 public static final Rotation3d cameraRotation = new Rotation3d(
