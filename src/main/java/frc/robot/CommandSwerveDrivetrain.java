@@ -4,7 +4,6 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -22,29 +21,16 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Notifier;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.generated.TunerConstants;
 import frc.robot.Telemetry;
-import frc.robot.subsystems.SUB_PhotonVision;
-import org.ironmaple.simulation.SimulatedArena;
-import org.ironmaple.simulation.seasonspecific.reefscape2025.Arena2025Reefscape;
-
-import static edu.wpi.first.units.Units.*;
-import edu.wpi.first.math.system.plant.DCMotor;
-import frc.robot.utils.simulation.MapleSimSwerveDrivetrain;
-import org.littletonrobotics.junction.Logger;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements subsystem
  * so it can be used in command-based projects.
  */
 public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder> implements Subsystem {
-    private static final double kSimLoopPeriod = 0.005; // 5 ms
-    private Notifier m_simNotifier = null;
-    private double m_lastSimTime;
 
     private final SwerveRequest.FieldCentric driveRequest = new SwerveRequest.FieldCentric()
         .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
@@ -75,8 +61,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
     private boolean reachedAutoTarget = false;
     private boolean intakeComplete = true;
 
-    private MapleSimSwerveDrivetrain mapleSimSwerveDrivetrain = null;
-
     public void setReachedTarget(boolean value) {
         reachedAutoTarget = value;
         edu.wpi.first.wpilibj.smartdashboard.SmartDashboard.putBoolean("ReachedAutoTarget", reachedAutoTarget);
@@ -96,31 +80,13 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
     }
 
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveConstants, double OdometryUpdateFrequency, SwerveModuleConstants... modules) {
-        super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, OdometryUpdateFrequency, MapleSimSwerveDrivetrain.regulateModuleConstantsForSimulation(modules));
-        if (Utils.isSimulation()) {
-            Arena2025Reefscape arena = new Arena2025Reefscape();
-            org.ironmaple.simulation.SimulatedArena.overrideInstance(arena);
-            arena.placeGamePiecesOnField();
-            this.resetPose(new Pose2d(1.5, 4.0, new Rotation2d()));
-        }
+        super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, OdometryUpdateFrequency, modules);
         configurePathPlanner();
-        if (Utils.isSimulation()) {
-            startSimThread();
-        }
         registerTelemetry(logger::telemeterize);
     }
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveConstants, SwerveModuleConstants... modules) {
-        super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, MapleSimSwerveDrivetrain.regulateModuleConstantsForSimulation(modules));
-        if (Utils.isSimulation()) {
-            Arena2025Reefscape arena = new Arena2025Reefscape();
-            org.ironmaple.simulation.SimulatedArena.overrideInstance(arena);
-            arena.placeGamePiecesOnField();
-            this.resetPose(new Pose2d(1.5, 4.0, new Rotation2d()));
-        }
+        super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, modules);
         configurePathPlanner();
-        if (Utils.isSimulation()) {
-            startSimThread();
-        }
         registerTelemetry(logger::telemeterize);
     }
 
@@ -170,14 +136,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
         this.resetRotation(new Rotation2d());
     }
 
-    @Override
-    public void resetPose(Pose2d pose) {
-        if (this.mapleSimSwerveDrivetrain != null) {
-            mapleSimSwerveDrivetrain.mapleSimDrive.setSimulationWorldPose(pose);
-        }
-        super.resetPose(pose);
-    }
-
     public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative, boolean rateLimit) {
         // Ignoring rateLimit for now as CTRE handles it via config/requests usually, 
         // or we'd need a SlewRateLimiter here.
@@ -202,41 +160,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
     // However, SwerveDrivetrain uses double timestamp, SUB_Drivetrain used double timestamp.
     // Let's check imports for Matrix.
 
-    private void startSimThread() {
-        // Initialize MapleSim with your robot's physical properties
-        @SuppressWarnings("unchecked")
-        var moduleConstants = (SwerveModuleConstants<com.ctre.phoenix6.configs.TalonFXConfiguration, com.ctre.phoenix6.configs.TalonFXConfiguration, com.ctre.phoenix6.configs.CANcoderConfiguration>[])
-            new SwerveModuleConstants[] {
-                TunerConstants.FrontLeft,
-                TunerConstants.FrontRight,
-                TunerConstants.BackLeft,
-                TunerConstants.BackRight
-            };
-
-        mapleSimSwerveDrivetrain = new MapleSimSwerveDrivetrain(
-            Seconds.of(kSimLoopPeriod),
-            Pounds.of(125), // Robot Mass
-            Inches.of(30),  // Bumper Length X
-            Inches.of(30),  // Bumper Width Y
-            DCMotor.getKrakenX60(1), // Drive Motor Type
-            DCMotor.getKrakenX60(1), // Steer Motor Type
-            1.2, // Wheel Coefficient of Friction
-            this.getModuleLocations(),
-            this.getPigeon2(),
-            this.getModules(),
-            // Pass the constants for FL, FR, BL, BR explicitly as a typed array to avoid unsafe varargs creation
-            moduleConstants
-        );
-        mapleSimSwerveDrivetrain.mapleSimDrive.setSimulationWorldPose(this.getPose());
-
-        /* Run simulation at a faster rate so PID gains behave more reasonably */
-        m_simNotifier = new Notifier(() -> {
-            mapleSimSwerveDrivetrain.update();
-            SUB_PhotonVision.getInstance().updateSimPose(mapleSimSwerveDrivetrain.mapleSimDrive.getSimulatedDriveTrainPose());
-        });
-        m_simNotifier.startPeriodic(kSimLoopPeriod);
-    }
-
     @Override
     public void periodic() {
         /* Periodically try to apply the operator perspective */
@@ -251,9 +174,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
                                 : BlueAlliancePerspectiveRotation);
                 hasAppliedOperatorPerspective = true;
             });
-        }
-        if (mapleSimSwerveDrivetrain != null) {
-            Logger.recordOutput("Drive/SimulationPose", mapleSimSwerveDrivetrain.mapleSimDrive.getSimulatedDriveTrainPose());
         }
     }
 }

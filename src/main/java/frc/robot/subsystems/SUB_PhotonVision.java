@@ -11,19 +11,14 @@ import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
-import org.photonvision.simulation.PhotonCameraSim;
-import org.photonvision.simulation.SimCameraProperties;
-import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.PhotonVision;
 
@@ -38,9 +33,6 @@ public class SUB_PhotonVision extends SubsystemBase {
   private final PhotonPoseEstimator poseEstimator2;
   public AprilTagFieldLayout at_field;
 
-  private VisionSystemSim visionSim;
-  private PhotonCameraSim cam1Sim;
-  private PhotonCameraSim cam2Sim;
 
   private final StructPublisher<Pose2d> cam1Publisher = NetworkTableInstance.getDefault()
       .getStructTopic("Vision/Cam1Pose", Pose2d.struct).publish();
@@ -55,15 +47,17 @@ public class SUB_PhotonVision extends SubsystemBase {
   }
 
   private SUB_PhotonVision() {
-    at_field =  AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark); // TODO: Change for diff events
+    try {
+      at_field = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
+    } catch (Exception e) {
+      // Handle exception, maybe fallback or log error
+      e.printStackTrace();
+    }
 
     cam1.setPipelineIndex(0);
     cam2.setPipelineIndex(0);
 
     PoseStrategy strategy = PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR;
-    if (RobotBase.isSimulation()) {
-        strategy = PoseStrategy.MULTI_TAG_PNP_ON_RIO;
-    }
 
     poseEstimator1 = new PhotonPoseEstimator(at_field, strategy,
         PhotonVision.kRobotToCamera1);
@@ -71,35 +65,8 @@ public class SUB_PhotonVision extends SubsystemBase {
          PhotonVision.kRobotToCamera2);
     poseEstimator1.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
     poseEstimator2.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
-
-    if (RobotBase.isSimulation()) {
-      visionSim = new VisionSystemSim("main");
-      visionSim.addAprilTags(at_field);
-
-      SimCameraProperties cameraProp = new SimCameraProperties();
-      // Arducam OV9281: 1280 x 800 resolution with a 70 degree diagonal FOV.
-      cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(70));
-      cameraProp.setCalibError(0.25, 0.08);
-      cameraProp.setFPS(20);
-      cameraProp.setAvgLatencyMs(35);
-      cameraProp.setLatencyStdDevMs(5);
-
-      cam1Sim = new PhotonCameraSim(cam1, cameraProp);
-      cam2Sim = new PhotonCameraSim(cam2, cameraProp);
-
-      visionSim.addCamera(cam1Sim, PhotonVision.kRobotToCamera1);
-      visionSim.addCamera(cam2Sim, PhotonVision.kRobotToCamera2);
-      
-      cam1Sim.enableDrawWireframe(true);
-      cam2Sim.enableDrawWireframe(true);
-    }
   }
 
-  public void updateSimPose(Pose2d robotPose) {
-    if (RobotBase.isSimulation()) {
-        visionSim.update(robotPose);
-    }
-  }
 
   private boolean isPoseValid(EstimatedRobotPose pose, String camName, double ambiguity) {
       if (Math.abs(pose.estimatedPose.getZ()) > PhotonVision.kMaxZError) {

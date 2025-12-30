@@ -956,7 +956,7 @@ public class RobotContainer {
 
                                 drivetrain.addVisionMeasurement(
                                                 photonPose.toPose2d(),
-                                                com.ctre.phoenix6.Utils.getCurrentTimeSeconds(),
+                                                estimatedPose.timestampSeconds,
                                                 VecBuilder.fill(xyStddev, xyStddev, rotStddev));
                                 publisher.set(photonPose.toPose2d());
                         }
