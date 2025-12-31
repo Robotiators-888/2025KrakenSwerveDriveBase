@@ -213,5 +213,6 @@ public final class Constants {
 
         public static class DriveConstants{
                 public static final double odometryFrequency = 100.0; // Hz
+                public static final int pigeonCanId = 1; // Set to 1 temporaraly, MUST be changed to a proper ID
         }
 }

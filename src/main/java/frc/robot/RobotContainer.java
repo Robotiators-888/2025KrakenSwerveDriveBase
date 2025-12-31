@@ -40,6 +40,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.Drivetrain;
 import frc.robot.Constants.Field;
 import frc.robot.Constants.Operator;
 import frc.robot.commands.CMD_OldPathfindReefAlign;
@@ -48,8 +49,10 @@ import frc.robot.commands.CMD_PathfindReefAlign;
 import frc.robot.generated.TunerConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-
-
+import frc.robot.subsystems.GyroIO;
+import frc.robot.subsystems.ModuleIO;
+import frc.robot.subsystems.GyroIOPigeon2;
+import frc.robot.subsystems.ModuleIOSim;
 import frc.robot.subsystems.SUB_PhotonVision;
 
 
@@ -64,6 +67,7 @@ import frc.robot.utils.Elastic;
  */
 public class RobotContainer {
         // The robot's subsystems and commands are defined here...
+        private SwerveDrive Swerve;
         private static final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
         private static final SUB_PhotonVision photonVision = SUB_PhotonVision.getInstance();
 
@@ -92,6 +96,7 @@ public class RobotContainer {
          * The container for the robot. Contains subsystems, OI devices, and commands.
          */
         public RobotContainer() {
+
                 drivetrain.setDefaultCommand(drivetrain.applyRequest(() -> drive
                                 .withVelocityX(-deadbandCompensate(Driver1.getLeftY())
                                                 * TunerConstants.kSpeedAt12VoltsMps)
@@ -116,6 +121,40 @@ public class RobotContainer {
                 SmartDashboard.putData("Auto Chooser", autoChooser);
                 SmartDashboard.putData("Active Auto Path", autoField);
 
+switch (Constants.LogConstants.currentMode) {
+      case REAL:
+        // Real robot, instantiate hardware IO implementations
+        Swerve =
+            new SwerveDrive(
+                new GyroIOPigeon2(),
+                new ModuleIOSpark(0),// Spark modules should be changed to kraken
+                new ModuleIOSpark(1),
+                new ModuleIOSpark(2),
+                new ModuleIOSpark(3));
+        break;
+
+      case SIM:
+        // Sim robot, instantiate physics sim IO implementations
+        Swerve =
+            new SwerveDrive(
+                new GyroIO() {},
+                new ModuleIOSim(),
+                new ModuleIOSim(),
+                new ModuleIOSim(),
+                new ModuleIOSim());
+        break;
+
+      default:
+        // Replayed robot, disable IO implementations
+        Swerve =
+            new SwerveDrive(
+                new GyroIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {});
+        break;
+        }
         }
 
         /**
