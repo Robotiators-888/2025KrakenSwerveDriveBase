@@ -5,20 +5,20 @@ import java.util.ArrayList;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 
-public class Alerts {
+public class Alert {
     // Need to publish info to Elastic/NetworkTables
-    private static Alerts INSTANCE = null;
+    private static Alert INSTANCE = null;
     ArrayList<String> error;
     ArrayList<String> warning;
     ArrayList<String> info;
-    private Alerts() {
+    private Alert() {
         error = new ArrayList<String>();
         warning = new ArrayList<String>();
         info = new ArrayList<String>();
     }
-    public static Alerts getInstance () {
+    public static Alert getInstance () {
         if (INSTANCE == null) {
-            INSTANCE = new Alerts();
+            INSTANCE = new Alert();
         }
         return INSTANCE;
     }
