@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.util.Color;
 public class Alert {
   // Need to publish info to Elastic/NetworkTables
   private static Alert INSTANCE = null;
+  // Static is likley not needed
   private static Elastic.Notification notification = new Elastic.Notification();
   ArrayList<String> error;
   ArrayList<String> warning;
@@ -37,36 +38,36 @@ public class Alert {
   }
   private void notifyError (String alert) {
     Elastic.sendNotification(notification
-        .withLevel(Elastic.Notification.NotificationLevel.ERROR)
-        .withTitle("Error!")
-        .withDescription(alert)
+      .withLevel(Elastic.Notification.NotificationLevel.ERROR)
+      .withTitle("Error!")
+      .withDescription(alert)
     );
   }
   private void notifyWarning (String alert) {
     Elastic.sendNotification(notification
-        .withLevel(Elastic.Notification.NotificationLevel.WARNING)
-        .withTitle("Warning:")
-        .withDescription(alert)
+      .withLevel(Elastic.Notification.NotificationLevel.WARNING)
+      .withTitle("Warning:")
+      .withDescription(alert)
     );
   }
   private void notifyInfo (String alert) {
     Elastic.sendNotification(notification
-        .withLevel(Elastic.Notification.NotificationLevel.INFO)
-        .withTitle("Info")
-        .withDescription(alert)
+      .withLevel(Elastic.Notification.NotificationLevel.INFO)
+      .withTitle("Info")
+      .withDescription(alert)
     );
   }
   // Sets the single color elastic object to the highes severity level that the robot has (check engine light)
   private void registerColor () {
     Color exampleColor;
     if (!error.isEmpty()) {
-        exampleColor = new Color(255, 0, 0); // Red
+      exampleColor = new Color(255, 0, 0); // Red
     }
     else if (!warning.isEmpty()) {
-        exampleColor = new Color(255, 255, 0); // Yellow
+      exampleColor = new Color(255, 255, 0); // Yellow
     }
     else {
-        exampleColor = new Color(0, 255, 0); // Green
+      exampleColor = new Color(0, 255, 0); // Green
     }
     // Not sure why this is SmartDashboard if this is elastic
     SmartDashboard.putString("Alerts", exampleColor.toHexString());        
