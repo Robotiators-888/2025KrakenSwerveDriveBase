@@ -36,12 +36,15 @@ public class Alert {
   }
   private void notifyError (String alert) {
     Elastic.Notification notification = new Elastic.Notification(Elastic.Notification.NotificationLevel.ERROR, "Error!", alert);
+    Elastic.sendNotification(notification);
   }
   private void notifyWarning (String alert) {
     Elastic.Notification notification = new Elastic.Notification(Elastic.Notification.NotificationLevel.WARNING, "Error!", alert);
+    Elastic.sendNotification(notification);
   }
   private void notifyInfo (String alert) {
     Elastic.Notification notification = new Elastic.Notification(Elastic.Notification.NotificationLevel.INFO, "Error!", alert);
+    Elastic.sendNotification(notification);
   }
   // Sets the single color elastic object to the highes severity level that the robot has (check engine light)
   private void registerColor () {
