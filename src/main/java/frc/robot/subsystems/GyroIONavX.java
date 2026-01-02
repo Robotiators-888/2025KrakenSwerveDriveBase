@@ -15,8 +15,8 @@ public class GyroIONavX implements GyroIO {
   private final Queue<Double> yawTimestampQueue;
 
   public GyroIONavX() {
-    yawTimestampQueue = SparkOdometryThread.getInstance().makeTimestampQueue();
-    yawPositionQueue = SparkOdometryThread.getInstance().registerSignal(navX::getAngle);
+    yawTimestampQueue = OdometryThread.getInstance().makeTimestampQueue();
+    yawPositionQueue = OdometryThread.getInstance().registerSignal(navX::getAngle);
   }
 
   @Override
@@ -34,4 +34,9 @@ public class GyroIONavX implements GyroIO {
     yawTimestampQueue.clear();
     yawPositionQueue.clear();
   }
+
+// @Override
+//  public void resetGyro() {
+//     this.pigeon.reset();
+// }   // Was mentioned in the setup for the pigeon 2 Gyro. Not sure what the NavX verion of this is and where it would go
 }

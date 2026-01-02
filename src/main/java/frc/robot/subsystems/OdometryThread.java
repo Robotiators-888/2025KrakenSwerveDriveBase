@@ -18,25 +18,26 @@ import java.util.function.DoubleSupplier;
  * <p>This version includes an overload for Spark signals, which checks for errors to ensure that
  * all measurements in the sample are valid.
  */
-public class SparkOdometryThread {
-  private final List<SparkBase> sparks = new ArrayList<>();
+public class OdometryThread {        
+  // Has a few more lines that need to be converted from spark to kraken. 
+  private final List<SparkBase> Krakens = new ArrayList<>();
   private final List<DoubleSupplier> sparkSignals = new ArrayList<>();
   private final List<DoubleSupplier> genericSignals = new ArrayList<>();
   private final List<Queue<Double>> sparkQueues = new ArrayList<>();
   private final List<Queue<Double>> genericQueues = new ArrayList<>();
   private final List<Queue<Double>> timestampQueues = new ArrayList<>();
 
-  private static SparkOdometryThread instance = null;
+  private static OdometryThread instance = null;
   private Notifier notifier = new Notifier(this::run);
 
-  public static SparkOdometryThread getInstance() {
+  public static OdometryThread getInstance() {
     if (instance == null) {
-      instance = new SparkOdometryThread();
+      instance = new OdometryThread();
     }
     return instance;
   }
 
-  private SparkOdometryThread() {
+  private OdometryThread() {
     notifier.setName("OdometryThread");
   }
 
@@ -51,7 +52,7 @@ public class SparkOdometryThread {
     Queue<Double> queue = new ArrayBlockingQueue<>(20);
     CommandSwerveDrivetrain.odometryLock.lock();
     try {
-      sparks.add(spark);
+      Krakens.add(spark);
       sparkSignals.add(signal);
       sparkQueues.add(queue);
     } finally {
@@ -97,7 +98,7 @@ public class SparkOdometryThread {
       boolean isValid = true;
       for (int i = 0; i < sparkSignals.size(); i++) {
         sparkValues[i] = sparkSignals.get(i).getAsDouble();
-        if (sparks.get(i).getLastError() != REVLibError.kOk) {
+        if (Krakens.get(i).getLastError() != REVLibError.kOk) {
           isValid = false;
         }
       }

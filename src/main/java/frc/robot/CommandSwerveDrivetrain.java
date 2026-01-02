@@ -29,16 +29,20 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.GyroIO;
+import frc.robot.subsystems.GyroIO.GyroIOInputs;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements subsystem
  * so it can be used in command-based projects.
  */
 public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder> implements Subsystem {
-
-    //For GyroIONavX file
-    static final Lock odometryLock = new ReentrantLock();
    
+    //For GyroIONavX file
+    public static final Lock odometryLock = new ReentrantLock(); //[Temporary fix] had started with "<blank> static.." but OdometryThread was not able to see it.
+    private final GyroIO gyroIO;  
+    private final GyroIOInputs gyroInputs = new GyroIOInputs();
+
     private static final double kSimLoopPeriod = 0.005; // 5 ms
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
@@ -238,5 +242,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
                 hasAppliedOperatorPerspective = true;
             });
         }
+        
     }
 }
