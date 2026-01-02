@@ -1,23 +1,29 @@
 package frc.robot.subsystems;
 
 import java.util.logging.Logger;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.subsystems.GyroIO.GyroIOInputs;
 import frc.robot.subsystems.ModuleIO.ModuleIOInputs;
 
 public class Module {
     private final ModuleIO io;
-    private final ModuleIOInputs inputs = new ModuleIOInputs(); // was called ModuleIOInputsAutoLog a temple for advantage kit, will change the name if nessary
+    private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
     private final int index;
-    
-    // public ModuleIO(GyroIO gyroIO,  //needs a return message
-    //  ModuleIO moduleIO) {
-    // this.io = moduleIO;
-    // this.gyroIO = gyroIO;
-    // }
 
-    public void periodic(){
-        io.updateInputs(inputs);
-        Logger.processInputs("Drive/Module" + Integer.toString(index), inputs);
+  private final Alert driveDisconnectedAlert;
+  private final Alert turnDisconnectedAlert;
+  private SwerveModulePosition[] odometryPositions = new SwerveModulePosition[] {};
 
-        }
+  public Module(ModuleIO io, int index) {
+    this.io = io;
+    this.index = index;
+  }
+
+  public void periodic() {
+    io.updateInputs(inputs);
+    Logger.getInstance().processInputs("Drive/" + name + "Module", inputs);
+}
+
 }
