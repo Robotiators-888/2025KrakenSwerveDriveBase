@@ -1,6 +1,6 @@
 package frc.robot.utils;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
@@ -13,16 +13,19 @@ public class Alert {
   Vector<String> error;
   Vector<String> warning;
   Vector<String> info;
+  HashMap<String, Integer> errorMap;
+  HashMap<String, Integer> warningMap;
+  HashMap<String, Integer> infoMap;
   Color alertColor;
-  String alertString;
 
   private Alert() {
     alertColor = new Color(0, 255, 0); // Green
-    alertString = alertColor.toHexString();
     error = new Vector<String>(new String());
     warning = new Vector<String>(new String());
     info = new Vector<String>(new String());
-    SmartDashboard.putString("Alerts", alertString);    
+    errorMap = new HashMap<String, Integer>();
+    warningMap = new HashMap<String, Integer>();
+    infoMap = new HashMap<String, Integer>();
     updateSmartDashboard();
     // testcalls();
   }
@@ -35,21 +38,27 @@ public class Alert {
   }
 
   public void registerError (String alert) {
-    error.add(alert);
-    registerColor();
-    updateSmartDashboard();
+    if (!errorMap.containsKey(alert)) {
+      errorMap.put(alert, 0);
+      error.add(alert);
+      updateSmartDashboard();
+    }
   }
 
   public void registerWarning (String alert) {
-    warning.add(alert);
-    registerColor();
-    updateSmartDashboard();
+    if (!warningMap.containsKey(alert)) {
+      warningMap.put(alert, 0);
+      warning.add(alert);
+      updateSmartDashboard();
+    }
   }
 
   public void registerInfo (String alert) {
-    info.add(alert);
-    registerColor();
-    updateSmartDashboard();
+    if (!infoMap.containsKey(alert)) {
+      infoMap.put(alert, 0);
+      info.add(alert);
+      updateSmartDashboard();
+    }
   }
 
   public void notifyError (String alert) {
@@ -87,7 +96,7 @@ public class Alert {
     else {
       alertColor = new Color(0, 255, 0); // Green
     }
-    alertString = alertColor.toHexString();
+    SmartDashboard.putString("Alerts", alertColor.toHexString());
   }
 
   public void triggerStop () { // Stops the robot from running with errors
@@ -100,9 +109,10 @@ public class Alert {
   }
 
   private void updateSmartDashboard () {
-    // ArrayList required aquark casting to work so I used Vector
+    // ArrayList required akward casting to work so I used Vector
     SmartDashboard.putStringArray("errors", error.toArray());
     SmartDashboard.putStringArray("warnings", warning.toArray());
-    SmartDashboard.putStringArray("info", info.toArray());   
+    SmartDashboard.putStringArray("info", info.toArray());
+    registerColor();
   }
 }
