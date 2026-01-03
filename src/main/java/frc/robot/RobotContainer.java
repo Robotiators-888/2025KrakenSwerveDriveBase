@@ -51,8 +51,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 
 
 import frc.robot.subsystems.SUB_PhotonVision;
-
-
+import frc.robot.utils.Alert;
 import frc.robot.utils.Elastic;
 
 
@@ -66,6 +65,7 @@ public class RobotContainer {
         // The robot's subsystems and commands are defined here...
         private static final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
         private static final SUB_PhotonVision photonVision = SUB_PhotonVision.getInstance();
+        private static final Alert alert = Alert.getInstance();
 
         private final SendableChooser<Command> autoChooser;
         public static PowerDistribution powerDistribution = new PowerDistribution();
@@ -489,6 +489,11 @@ public class RobotContainer {
                                                 photonVision.getCam1BestTarget().getFiducialId());
                         }
                 }
+                else {
+                        // I should make this prevent duplicates
+                        alert.registerWarning("PhotonVision inactive");
+                        alert.notifyWarning("PhotonVision inactive");
+                }
 
                 photonPoseOptional = photonVision.getCam2Pose();
 
@@ -523,6 +528,11 @@ public class RobotContainer {
                                                 photonVision.getCam2BestTarget().getFiducialId());
                         }
                 }
+                else {
+                        alert.registerWarning("PhotonVision inactive");
+                        alert.notifyWarning("PhotonVision inactive");
+                }
+
         }
 
         // public static void photonAutonPoseUpdate() {
