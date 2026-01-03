@@ -41,7 +41,9 @@ public class Alert {
     if (!errorMap.containsKey(alert)) {
       errorMap.put(alert, 0);
       error.add(alert);
+      notifyError(alert);
       updateSmartDashboard();
+      // triggerStop();
     }
   }
 
@@ -49,6 +51,7 @@ public class Alert {
     if (!warningMap.containsKey(alert)) {
       warningMap.put(alert, 0);
       warning.add(alert);
+      notifyWarning(alert);
       updateSmartDashboard();
     }
   }
@@ -57,11 +60,12 @@ public class Alert {
     if (!infoMap.containsKey(alert)) {
       infoMap.put(alert, 0);
       info.add(alert);
+      notifyInfo(alert);
       updateSmartDashboard();
     }
   }
 
-  public void notifyError (String alert) {
+  private void notifyError (String alert) {
     Elastic.sendNotification(notification
       .withLevel(Elastic.Notification.NotificationLevel.ERROR)
       .withTitle("Error!")
@@ -69,7 +73,7 @@ public class Alert {
     );
   }
 
-  public void notifyWarning (String alert) {
+  private void notifyWarning (String alert) {
     Elastic.sendNotification(notification
       .withLevel(Elastic.Notification.NotificationLevel.WARNING)
       .withTitle("Warning:")
@@ -77,7 +81,7 @@ public class Alert {
     );
   }
 
-  public void notifyInfo (String alert) {
+  private void notifyInfo (String alert) {
     Elastic.sendNotification(notification
       .withLevel(Elastic.Notification.NotificationLevel.INFO)
       .withTitle("Info")
