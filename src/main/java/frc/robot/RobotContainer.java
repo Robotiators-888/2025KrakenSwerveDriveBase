@@ -492,7 +492,6 @@ public class RobotContainer {
                 else {
                         // I should make this prevent duplicates
                         alert.registerWarning("PhotonVision inactive");
-                        alert.notifyWarning("PhotonVision inactive");
                 }
 
                 photonPoseOptional = photonVision.getCam2Pose();
@@ -530,7 +529,6 @@ public class RobotContainer {
                 }
                 else {
                         alert.registerWarning("PhotonVision inactive");
-                        alert.notifyWarning("PhotonVision inactive");
                 }
 
         }

@@ -65,7 +65,8 @@ public class Alert {
     }
   }
 
-  private void notifyError (String alert) {
+  // Don't use on things that spam the notifications maybe use them for things like telop init, things that happen multiple times, infrequently
+  public void notifyError (String alert) {
     Elastic.sendNotification(notification
       .withLevel(Elastic.Notification.NotificationLevel.ERROR)
       .withTitle("Error!")
@@ -73,7 +74,7 @@ public class Alert {
     );
   }
 
-  private void notifyWarning (String alert) {
+  public void notifyWarning (String alert) {
     Elastic.sendNotification(notification
       .withLevel(Elastic.Notification.NotificationLevel.WARNING)
       .withTitle("Warning:")
@@ -81,7 +82,7 @@ public class Alert {
     );
   }
 
-  private void notifyInfo (String alert) {
+  public void notifyInfo (String alert) {
     Elastic.sendNotification(notification
       .withLevel(Elastic.Notification.NotificationLevel.INFO)
       .withTitle("Info")
