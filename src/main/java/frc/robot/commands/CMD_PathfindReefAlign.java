@@ -23,6 +23,7 @@ import edu.wpi.first.networktables.IntegerArrayPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
+import frc.robot.utils.Alert;
 import frc.robot.CommandSwerveDrivetrain;
 import frc.robot.subsystems.SUB_PhotonVision;
 
@@ -134,7 +135,7 @@ public class CMD_PathfindReefAlign extends Command {
       PathPlannerPath paths = PathPlannerPath.fromPathFile(selectedCharacter + " Score Pathfind");
       pathfindingCommand = AutoBuilder.pathfindThenFollowPath(paths, constraints);
     } catch (Exception e) {
-      //System.out.println("Path not found, switching to pathfindToPose. Error: " + e);
+      Alert.getInstance().registerWarning("Path not found, switching to pathfindToPose. Error: " + e.getMessage());
       pathfindingCommand = AutoBuilder.pathfindToPose(pose, constraints);
     }
     pathfindingCommand.initialize();

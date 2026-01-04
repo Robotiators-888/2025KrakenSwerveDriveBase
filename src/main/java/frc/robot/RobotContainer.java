@@ -271,7 +271,7 @@ public class RobotContainer {
                                         Units.degreesToRadians(180), Units.degreesToRadians(180)); // unstable
                         return AutoBuilder.pathfindThenFollowPath(path, constraints);
                 } catch (Exception e) {
-                        DriverStation.reportError("Big oops: " + e.getMessage(), e.getStackTrace());
+                        Alert.getInstance().registerError("Big oops: " + e.getMessage());
                         return Commands.none();
                 }
         }
@@ -370,6 +370,12 @@ public class RobotContainer {
         }
 
         public void robotPeriodic() {
+                if (!Driver1.getHID().isConnected()) {
+                        Alert.getInstance().registerError("Driver 1 Controller Disconnected");
+                }
+                if (!Driver2.getHID().isConnected()) {
+                        Alert.getInstance().registerError("Driver 2 Controller Disconnected");
+                }
 
                 SmartDashboard.putNumber("Battery Voltage", powerDistribution.getVoltage());
                 SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
@@ -445,9 +451,11 @@ public class RobotContainer {
                                         }
                                         autoField.getObject("path").setPoses(poses);
                                 } catch (IOException e) {
+                                        Alert.getInstance().registerError("Failed to read path file: " + e.getMessage());
                                         e.printStackTrace();
                                         return;
                                 } catch (ParseException e) {
+                                        Alert.getInstance().registerError("Failed to parse path file: " + e.getMessage());
                                         e.printStackTrace();
                                         return;
                                 }
@@ -489,10 +497,6 @@ public class RobotContainer {
                                                 photonVision.getCam1BestTarget().getFiducialId());
                         }
                 }
-                else {
-                        // I should make this prevent duplicates
-                        alert.registerWarning("PhotonVision inactive");
-                }
 
                 photonPoseOptional = photonVision.getCam2Pose();
 
@@ -526,9 +530,6 @@ public class RobotContainer {
                                 SmartDashboard.putNumber("Cam 2 Closest Tag",
                                                 photonVision.getCam2BestTarget().getFiducialId());
                         }
-                }
-                else {
-                        alert.registerWarning("PhotonVision inactive");
                 }
 
         }
