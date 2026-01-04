@@ -156,7 +156,7 @@ public class RobotContainer {
                                         Units.degreesToRadians(180), Units.degreesToRadians(180)); // unstable
                         return AutoBuilder.pathfindThenFollowPath(path, constraints);
                 } catch (Exception e) {
-                        DriverStation.reportError("Big oops: " + e.getMessage(), e.getStackTrace());
+                        Alert.getInstance().registerError("Big oops: " + e.getMessage());
                         return Commands.none();
                 }
         }
@@ -249,9 +249,11 @@ public class RobotContainer {
                                         }
                                         autoField.getObject("path").setPoses(poses);
                                 } catch (IOException e) {
+                                        Alert.getInstance().registerError("Failed to read path file: " + e.getMessage());
                                         e.printStackTrace();
                                         return;
                                 } catch (ParseException e) {
+                                        Alert.getInstance().registerError("Failed to parse path file: " + e.getMessage());
                                         e.printStackTrace();
                                         return;
                                 }

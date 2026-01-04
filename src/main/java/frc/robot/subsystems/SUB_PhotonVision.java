@@ -20,6 +20,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.utils.Alert;
 import frc.robot.Constants.PhotonVision;
 
 public class SUB_PhotonVision extends SubsystemBase {
@@ -166,6 +167,11 @@ public class SUB_PhotonVision extends SubsystemBase {
 
   @Override
   public void periodic() {
-
+    if (!cam1.isConnected()) {
+      Alert.getInstance().registerError("PhotonVision Camera 1 Disconnected");
+    }
+    if (!cam2.isConnected()) {
+      Alert.getInstance().registerError("PhotonVision Camera 2 Disconnected");
+    }
   }
 }

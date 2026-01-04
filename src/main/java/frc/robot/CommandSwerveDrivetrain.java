@@ -2,6 +2,7 @@ package frc.robot;
 
 import java.util.function.Supplier;
 
+import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
@@ -21,9 +22,14 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.generated.TunerConstants;
+import frc.robot.utils.Alert;
+import frc.robot.Telemetry;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements subsystem
@@ -59,6 +65,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
 
     private boolean reachedAutoTarget = false;
     private boolean intakeComplete = true;
+    private final Timer canHealthTimer = new Timer();
 
     public void setReachedTarget(boolean value) {
         reachedAutoTarget = value;
@@ -80,11 +87,13 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
 
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveConstants, double OdometryUpdateFrequency, SwerveModuleConstants... modules) {
         super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, OdometryUpdateFrequency, modules);
+        canHealthTimer.start();
         configurePathPlanner();
         registerTelemetry(logger::telemeterize);
     }
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveConstants, SwerveModuleConstants... modules) {
         super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, modules);
+        canHealthTimer.start();
         configurePathPlanner();
         registerTelemetry(logger::telemeterize);
     }
@@ -94,6 +103,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
         try {
             config = RobotConfig.fromGUISettings();
         } catch (Exception e) {
+            Alert.getInstance().registerError("Failed to load RobotConfig: " + e.getMessage());
             e.printStackTrace();
             return;
         }
@@ -173,6 +183,25 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
                                 : BlueAlliancePerspectiveRotation);
                 hasAppliedOperatorPerspective = true;
             });
+        }
+
+        if (canHealthTimer.hasElapsed(2.0)) {
+            for (int i = 0; i < 4; i++) {
+                var module = this.getModule(i);
+                if (module.getDriveMotor().getDeviceTemp().getStatus() != StatusCode.OK) {
+                    Alert.getInstance().registerError("Drive Motor ID " + module.getDriveMotor().getDeviceID() + " Disconnected");
+                }
+                if (module.getSteerMotor().getDeviceTemp().getStatus() != StatusCode.OK) {
+                    Alert.getInstance().registerError("Steer Motor ID " + module.getSteerMotor().getDeviceID() + " Disconnected");
+                }
+                if (module.getEncoder().getAbsolutePosition().getStatus() != StatusCode.OK) {
+                    Alert.getInstance().registerError("CANcoder ID " + module.getEncoder().getDeviceID() + " Disconnected");
+                }
+            }
+            if (this.getPigeon2().getTemperature().getStatus() != StatusCode.OK) {
+                Alert.getInstance().registerError("Pigeon2 ID " + this.getPigeon2().getDeviceID() + " Disconnected");
+            }
+            canHealthTimer.restart();
         }
     }
 }
