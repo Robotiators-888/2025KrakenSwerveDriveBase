@@ -26,36 +26,30 @@ public class Vector <T> {
     return array;
   }
 
-  public void add (T data) throws NullPointerException {
-    // Data shouldn't be null
-    if (data == null) {
-        throw new NullPointerException();
+  public void add (T data) {
+    if (usedSize+1 < size) {
+      // Inserts data
+      storage[usedSize] = data;
+      usedSize++;
     }
     else {
-      if (usedSize+1 < size) {
-        // Inserts data
-        storage[usedSize] = data;
-        usedSize++;
+      size*=2;
+      // Creates a reference to storage and keeps its data alive
+      T[] tempStorage = storage;
+      // Makes storage a new array
+      storage = createArray(size, defaultVal);
+      int i = 0;
+      // "Copies" the elements (it really uses references but who cares) hopefully doesn't create memory leaks by keeping references to old allocations
+      for (i = 0;i<tempStorage.length;i++) {
+          storage[i] = tempStorage[i];
       }
-      else {
-        size*=2;
-        // Creates a reference to storage and keeps its data alive
-        T[] tempStorage = storage;
-        // Makes storage a new array
-        storage = createArray(size, defaultVal);
-        int i = 0;
-        // "Copies" the elements (it really uses references but who cares) hopefully doesn't create memory leaks by keeping references to old allocations
-        for (i = 0;i<tempStorage.length;i++) {
-            storage[i] = tempStorage[i];
-        }
-        // Fills the rest of the array with the default value
-        for (i=i;i<storage.length;i++) {
-            storage[i] = defaultVal;
-        }
-        // Inserts data
-        storage[usedSize] = data;
-        usedSize++;
+      // Fills the rest of the array with the default value
+      for (i=i;i<storage.length;i++) {
+          storage[i] = defaultVal;
       }
+      // Inserts data
+      storage[usedSize] = data;
+      usedSize++;
     }
   }
 
