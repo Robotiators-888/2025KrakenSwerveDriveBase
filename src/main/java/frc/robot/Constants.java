@@ -63,7 +63,11 @@ public final class Constants {
 
         public static final class PhotonVision {
 
-                public static final String kCam1Name = "AprilTagCam1";
+                public static final String kCamName = "AprilTagCam1";
+                public static final double kMaxZError = 0.2;
+                public static final double kMaxAmbiguity = 0.1;
+                public static final double kMaxDistance = 12.0;
+
                 public static final Rotation3d cameraRotation = new Rotation3d(
                                 Units.degreesToRadians(0), Units.degreesToRadians(0),
                                 Units.degreesToRadians(-25));
@@ -80,12 +84,12 @@ public final class Constants {
                                 Units.inchesToMeters(11), cameraRotation2);
 
 
-                public static final String kCam3Name = "AprilTagHighCam";
-                public static final Rotation3d cameraRotation3 = new Rotation3d(0,
-                                 Units.degreesToRadians(0), Units.degreesToRadians(8));
-                public static final Transform3d kRobotToCamera3 = new Transform3d(
-                                 Units.inchesToMeters(-7+3.25), Units.inchesToMeters(-10),
-                                 Units.inchesToMeters(23.5), cameraRotation);
+                // public static final String kCam3Name = "AprilTagHighCam";
+                // public static final Rotation3d cameraRotation3 = new Rotation3d(0,
+                //                  Units.degreesToRadians(0), Units.degreesToRadians(8));
+                // public static final Transform3d kRobotToCamera3 = new Transform3d(
+                //                  Units.inchesToMeters(-7+3.25), Units.inchesToMeters(-10),
+                //                  Units.inchesToMeters(23.5), cameraRotation);
         }
 
         public static final class PivotConstants {
