@@ -28,6 +28,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -260,70 +261,33 @@ public class RobotContainer {
         }
 
         public static void photonPoseUpdate() {
-                Optional<EstimatedRobotPose> photonPoseOptional = photonVision.getCam1Pose();
+                processCameraPose(photonVision.getCam1Pose(), drivetrain.publisher3);
+                processCameraPose(photonVision.getCam2Pose(), drivetrain.publisher4);
+        }
 
-                if (photonPoseOptional.isPresent()) {
-                        Pose3d photonPose = photonPoseOptional.get().estimatedPose;
-                        double odometryDifference = (drivetrain.getPose().minus(new Pose2d(photonPose.getX(),photonPose.getY(), new Rotation2d(0)))).getTranslation().getNorm();
+        private static void processCameraPose(Optional<EstimatedRobotPose> poseOptional, StructPublisher<Pose2d> publisher) {
+                if (poseOptional.isPresent()) {
+                        EstimatedRobotPose estimatedPose = poseOptional.get();
+                        Pose3d photonPose = estimatedPose.estimatedPose;
+                        
                         if (photonPose.getX() >= 0 && photonPose.getX() <= Field.fieldLength
-                                        && photonPose.getY() >= 0
-                                        && photonPose.getY() <= Field.fieldWidth
-                                        && photonVision.getCam1BestTarget() != null
-                                        // && odometryDifference > 2
-                                        ) {
+                                        && photonPose.getY() >= 0 && photonPose.getY() <= Field.fieldWidth
+                                        && !estimatedPose.targetsUsed.isEmpty()) {
 
-                                Pose2d closestTag = photonVision.at_field.getTagPose(
-                                                photonVision.getCam1BestTarget().getFiducialId())
-                                                .get().toPose2d();
-                                Translation2d translate = closestTag.minus(photonPose.toPose2d())
-                                                .getTranslation();
+                                double minDist = Double.MAX_VALUE;
+                                for (var target : estimatedPose.targetsUsed) {
+                                        double dist = target.getBestCameraToTarget().getTranslation().getNorm();
+                                        if (dist < minDist) minDist = dist;
+                                }
 
-                                double distance = translate.getNorm();
-                                double xStddev = Math.pow(distance, 2) / (8.0088 * 0.5);
-                                double yStddev = xStddev;
+                                double xyStddev = Math.pow(minDist, 2) / 16.0;
                                 double rotStddev = Units.degreesToRadians(120.0);
-                                drivetrain.publisher3.set(photonPose.toPose2d());
-                                drivetrain.setVisionMeasurementStdDevs(
-                                                VecBuilder.fill(xStddev, yStddev, rotStddev));
-                                drivetrain.addVisionMeasurement(photonPose.toPose2d(),
-                                                photonPoseOptional.get().timestampSeconds);
-                                drivetrain.publisher3.set(photonPose.toPose2d());
-                                SmartDashboard.putNumber("Cam 1 Closest Tag",
-                                                photonVision.getCam1BestTarget().getFiducialId());
-                        }
-                }
 
-                photonPoseOptional = photonVision.getCam2Pose();
-
-                if (photonPoseOptional.isPresent()) {
-                        Pose3d photonPose = photonPoseOptional.get().estimatedPose;
-                        double odometryDifference = (drivetrain.getPose().minus(new Pose2d(photonPose.getX(),photonPose.getY(), new Rotation2d(0)))).getTranslation().getNorm();
-                        if (photonPose.getX() >= 0 && photonPose.getX() <= Field.fieldLength
-                                        && photonPose.getY() >= 0
-                                        && photonPose.getY() <= Field.fieldWidth
-                                        && photonVision.getCam2BestTarget() != null
-                                        // && odometryDifference > 2
-                                        ) {
-
-                                Pose2d closestTag = photonVision.at_field.getTagPose(
-                                                photonVision.getCam2BestTarget().getFiducialId())
-                                                .get().toPose2d();
-                                Translation2d translate = closestTag.minus(photonPose.toPose2d())
-                                                .getTranslation();
-
-                                double distance = translate.getNorm();
-                                double xStddev = Math.pow(distance, 2) / 8.0088;
-                                double yStddev = xStddev;
-                                double rotStddev = Units.degreesToRadians(120.0);
-                                drivetrain.publisher4.set(photonPose.toPose2d());
-                                drivetrain.setVisionMeasurementStdDevs(
-                                                VecBuilder.fill(xStddev, yStddev, rotStddev));
-                                drivetrain.addVisionMeasurement(photonPose.toPose2d(),
-                                                photonPoseOptional.get().timestampSeconds);
-
-                                drivetrain.publisher4.set(photonPose.toPose2d());
-                                SmartDashboard.putNumber("Cam 2 Closest Tag",
-                                                photonVision.getCam2BestTarget().getFiducialId());
+                                drivetrain.addVisionMeasurement(
+                                                photonPose.toPose2d(),
+                                                estimatedPose.timestampSeconds,
+                                                VecBuilder.fill(xyStddev, xyStddev, rotStddev));
+                                publisher.set(photonPose.toPose2d());
                         }
                 }
         }

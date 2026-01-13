@@ -6,10 +6,12 @@ package frc.robot;
 
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
-
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -29,6 +31,15 @@ public class Robot extends LoggedRobot {
   public Robot() {
 
     DataLogManager.start();
+    Logger.recordMetadata("ProjectName", "MyProject"); // Set a metadata value
+
+    if (isReal()) {
+        Logger.addDataReceiver(new WPILOGWriter()); // Log to a USB stick
+        Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+    } else {
+        Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
+    }
+
     Logger.start();
     
     // Instantiate our RobotContainer. This will perform all our button bindings, and put our
