@@ -4,7 +4,6 @@ import java.util.function.Supplier;
 
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrain;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
@@ -22,21 +21,15 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Notifier;
-import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import frc.robot.generated.TunerConstants;
-import frc.robot.Telemetry;
 
 /**
  * Class that extends the Phoenix SwerveDrivetrain class and implements subsystem
  * so it can be used in command-based projects.
  */
 public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, CANcoder> implements Subsystem {
-    private static final double kSimLoopPeriod = 0.005; // 5 ms
-    private Notifier m_simNotifier = null;
-    private double m_lastSimTime;
 
     private final SwerveRequest.FieldCentric driveRequest = new SwerveRequest.FieldCentric()
         .withDriveRequestType(DriveRequestType.OpenLoopVoltage);
@@ -88,17 +81,11 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveConstants, double OdometryUpdateFrequency, SwerveModuleConstants... modules) {
         super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, OdometryUpdateFrequency, modules);
         configurePathPlanner();
-        if (Utils.isSimulation()) {
-            startSimThread();
-        }
         registerTelemetry(logger::telemeterize);
     }
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveConstants, SwerveModuleConstants... modules) {
         super(TalonFX::new, TalonFX::new, CANcoder::new, driveConstants, modules);
         configurePathPlanner();
-        if (Utils.isSimulation()) {
-            startSimThread();
-        }
         registerTelemetry(logger::telemeterize);
     }
 
@@ -148,37 +135,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
         this.resetRotation(new Rotation2d());
     }
 
-    public void resetPose(Pose2d pose) {
-        this.resetRotation(pose.getRotation());
-        // SwerveDrivetrain (superclass) doesn't explicitly expose a setPose method easily in all versions.
-        // But resetRotation sets rotation. Translation is usually handled by seedFieldCentric?
-        // Actually, seedFieldRelative(pose) in old API did both.
-        // In 2025, if resetPose exists in super, we should use it.
-        // If not, we might need to access the odometry thread or similar.
-        // Let's assume resetPose exists or similar.
-        // Actually, for now I'll just use resetRotation as a placeholder if resetPose is missing, 
-        // but likely seedFieldRelative is replaced by resetPose(Pose2d).
-        // Let's try calling super.resetPose(pose). 
-        // If that fails compilation, I will know.
-        // But wait, I can't check compilation after this step easily without running it.
-        // I will use resetRotation for now and comment about translation.
-        // Actually, seedFieldRelative was renaming to resetPose?
-        try {
-            // Reflective check or just assume usage?
-            // I'll try calling super.resetPose(pose) if I can.
-            // But I cannot call super methods via reflection here.
-            // I'll use `resetRotation` for rotation.
-            // For translation, `resetTranslation`?
-            // The search said `seedFieldCentric` resets to 0.
-            
-            // Let's assume I should call super.resetPose(pose). 
-            // If it fails, I'll fix it.
-            super.resetPose(pose);
-        } catch (Throwable t) {
-            // Fallback?
-        }
-    }
-
     public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative, boolean rateLimit) {
         // Ignoring rateLimit for now as CTRE handles it via config/requests usually, 
         // or we'd need a SlewRateLimiter here.
@@ -202,21 +158,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain<TalonFX, TalonFX, 
     // We don't need to add it if it matches.
     // However, SwerveDrivetrain uses double timestamp, SUB_Drivetrain used double timestamp.
     // Let's check imports for Matrix.
-
-    private void startSimThread() {
-        m_lastSimTime = Utils.getCurrentTimeSeconds();
-
-        /* Run simulation at a faster rate so PID gains behave more reasonably */
-        m_simNotifier = new Notifier(() -> {
-            final double currentTime = Utils.getCurrentTimeSeconds();
-            double deltaTime = currentTime - m_lastSimTime;
-            m_lastSimTime = currentTime;
-
-            /* use the measured time delta, get battery voltage from WPILib */
-            updateSimState(deltaTime, RobotController.getBatteryVoltage());
-        });
-        m_simNotifier.startPeriodic(kSimLoopPeriod);
-    }
 
     @Override
     public void periodic() {

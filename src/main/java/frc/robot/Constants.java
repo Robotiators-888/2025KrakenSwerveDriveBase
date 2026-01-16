@@ -4,17 +4,8 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Radians;
-
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-
-import edu.wpi.first.math.controller.ArmFeedforward;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
 
 /**
@@ -34,36 +25,20 @@ public final class Constants {
                 public static final double kDriveDeadband = 0.05;
         }
 
-        public static final class Drivetrain {
-                // Constants for CMD_ReefAlign
-                public static final double kXShiftMagnitude =
-                                Units.inchesToMeters(5+(30.5 / 2)); // Distance away from
-                                                                 
-                                // the April Tag
-                public static final double kYShiftMagnitude = Units.inchesToMeters(6.5); // Distance
-                                                                                         // shifted
-                                                                                         // to the
-                                                                                         // left/right
-                                                                                         // of the
-                                                                                         // April
-                                                                                         // Tag
-
-        }
-
-        // Motor Constants
-        public static final class Motor {
-                public static final double kVortexFreeSpeedRpm = 6784;
-                public static final double kNeoFreeSpeedRpm = 5676;
-        }
+        public static final class Drivetrain {}
 
         public static final class Field {
-                public static final double fieldLength = 1755.0 / 100.0;
-                public static final double fieldWidth = 805.0 / 100.0;
+                public static final double fieldLength = 1653.2 / 100.0;
+                public static final double fieldWidth = 800.1 / 100.0;
         }
 
         public static final class PhotonVision {
 
-                public static final String kCam1Name = "AprilTagCam1";
+                public static final String kCamName = "AprilTagCam1";
+                public static final double kMaxZError = 0.2;
+                public static final double kMaxAmbiguity = 0.1;
+                public static final double kMaxDistance = 12.0;
+
                 public static final Rotation3d cameraRotation = new Rotation3d(
                                 Units.degreesToRadians(0), Units.degreesToRadians(0),
                                 Units.degreesToRadians(-25));
@@ -80,117 +55,14 @@ public final class Constants {
                                 Units.inchesToMeters(11), cameraRotation2);
 
 
-                public static final String kCam3Name = "AprilTagHighCam";
-                public static final Rotation3d cameraRotation3 = new Rotation3d(0,
-                                 Units.degreesToRadians(0), Units.degreesToRadians(8));
-                public static final Transform3d kRobotToCamera3 = new Transform3d(
-                                 Units.inchesToMeters(-7+3.25), Units.inchesToMeters(-10),
-                                 Units.inchesToMeters(23.5), cameraRotation);
+                // public static final String kCam3Name = "AprilTagHighCam";
+                // public static final Rotation3d cameraRotation3 = new Rotation3d(0,
+                //                  Units.degreesToRadians(0), Units.degreesToRadians(8));
+                // public static final Transform3d kRobotToCamera3 = new Transform3d(
+                //                  Units.inchesToMeters(-7+3.25), Units.inchesToMeters(-10),
+                //                  Units.inchesToMeters(23.5), cameraRotation);
         }
 
-        public static final class PivotConstants {
-                public static final ArmFeedforward noCoralArmFeedforward =
-                                new ArmFeedforward(0, 0.69, 0.34);
-                public static final ArmFeedforward coralArmFeedforward =
-                                new ArmFeedforward(0, 0.69, 0.34); // TODO: Set it the same for now,
-                                                                   // change later
-
-                public static final double kAlgaeSafeSetpoint = 160;
-                public static final double kAlgaeScoringSetpoint = 132;
-
-                public static final double kIntakeSetpoint = 326;
-                public static final double kElevatingSetpoint = 288;
-                public static final double kCoralSetpoint = 300;
-                public static final double kAlgaeSetpoint = 176;
-                public static final double toleranceDegrees = 5;
-
-                public static final double kL1Setpoint = 300;
-                public static final double kL2Setpoint = 294;
-                public static final double kL3Setpoint = 295;
-                public static final double kL4Setpoint = 270;
-
-                public static final double kUpperBoundStuckPoint = 340.0;
-                public static final double kLowerBoundStuckPoint = 327.0;
-        }
-
-        public static final class Elevator {
-                public static final double kHomingEncoderLocation = 0;
-                public static final double kResetHomingThreshold = 0.05;
-                public static final double kEncoderNearZero = 0.01;
-                public static final double kHomingEmergencyCurrent = 40;
-                public static final double kHomingVoltage = -0.25;
-                public static final double kTolerance = 0.05;
-
-
-                public static final double kMaxUpVoltage = 6.375;
-                public static final double kMaxUpErrorThreshold = 0.25;
-                public static final double kHighUpVoltage = 5.1;
-                public static final double kHighUpErrorThreshold = 0.15;
-                public static final double kMediumUpVoltage = 4.2;
-                public static final double kMediumUpErrorThreshold = 0.06;
-                public static final double kSlowUpVoltage = 3.4;
-
-                public static final double kMaxDownVoltage = -2.65;
-                public static final double kMaxDownErrorThreshold = 0.25;
-                public static final double kHighDownVoltage = -2.1;
-                public static final double kHighDownErrorThreshold = 0.20;
-                public static final double kMediumDownVoltage = -1.2;
-                public static final double kMediumDownErrorThreshold = 0.09;
-                public static final double kSlowDownVoltage = -0.55;
-                public static final double kSlowDownThreshold = 0.06;
-
-                public static final double kEmptyHoldingVoltage = 0.6;
-                public static final double kEmptyHoldingVoltageTop = 0.74;
-                public static final double kCoralHoldingVoltage = 0.85;
-                public static final double kAlgaeHoldingVoltage = 0.72;
-
-                public static final double kStartingSetpoint = 0;
-                public static final double kL1Setpoint = 0.1;
-                public static final double kL2Setpoint = 0.162 - 0.0378;
-                public static final double kL3Setpoint = 0.375 - 0.0378;
-                public static final double kL4Setpoint = 0.695;
-                public static final double kAlgaeSetpoint = 0.428;
-                public static final double kProcessorSetpoint = 0.104;
-        }
-
-        public static class Roller {
-                public static final int kRollerCanID = 30;
-                public static final int kHelperCanID = 34;
-                public static final double kIntakeCurrentThreshold = 35; // Amps
-                public static final int kRollerCurrentLimit = 60;
-                public static final int kHelperCurrentLimit = 20;
-                public static final double kRollerHelperSpeed = 0.7;
-                public static final double kIntakeSpeed = 0.2; // Percent
-                public static final double kIntakeFinishSpeed = 0.1; // Percent
-                public static final double kIntakeStartingTime = 1.25; // Seconds
-                public static final double kIntakeFinishTime = 0.12; // Seconds
-
-                public static final double kEjectSpeed = 0.7; // Percent
-                public static final double kFreeSpinThreshold = 420; // RPM
-        }
         
-        public static class GroundIntake {
-                public static final int kGroundIntakeCanID = 51;
-                public static final double kGroundIntakeSpeed = -0.45;
-                public static final double kGroundEjectSpeed = 1;
-        }
-        public static class GroundPivot {
-                public static final int kGroundPivotCanID = 52;
-                public static final double kIntakePos = 181;
-                public static final double kIntakeThreshold = 30; 
-
-
-                public static final double kStowPos = 0;
-                public static final double kScorePos = 45;
-                public static final double kPivotDeadband = 0.05;
-                public static final int kPivotSpeed = 1; 
-
-        }
-
-        public static class LEDs {
-                public static final int kPWMPort = 9;
-                public static final double kColorGreen = 0.77;
-                public static final double kColorRed = 0.61;
-                public static final double kParty_Palette_Twinkles = -0.53;
-        }
+        
 }
